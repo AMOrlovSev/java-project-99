@@ -2,6 +2,7 @@ plugins {
     id("java")
     id("org.springframework.boot") version "3.2.2"
     id("io.spring.dependency-management") version "1.1.3"
+    id("org.sonarqube") version "7.0.0.6105"
 }
 
 group = "hexlet.code"
@@ -23,4 +24,11 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "AMOrlovSev_java-project-99")
+        property("sonar.organization", "amorlovsev")
+    }
 }
