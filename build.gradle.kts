@@ -5,6 +5,7 @@ plugins {
     id("org.sonarqube") version "7.0.0.6105"
     checkstyle
     jacoco
+    kotlin("kapt") version "1.9.25"
 }
 
 group = "hexlet.code"
@@ -15,13 +16,31 @@ repositories {
 }
 
 dependencies {
+    // Spring Boot starters
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-devtools")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
+    // Базы данных
+    runtimeOnly("com.h2database:h2") // Для разработки
+    runtimeOnly("org.postgresql:postgresql") // Для продакшена
+
+    // Datafaker
+    implementation("net.datafaker:datafaker:2.4.3")
+
+    // Lombok
+    compileOnly("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
+
+    // Test dependencies
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.instancio:instancio-junit:3.3.0")
+    testImplementation("net.javacrumbs.json-unit:json-unit-assertj:3.2.2")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    testImplementation("org.springframework.security:spring-security-test")
 }
 
 tasks.test {
