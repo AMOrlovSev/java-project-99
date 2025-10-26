@@ -1,11 +1,10 @@
 plugins {
-    id("java")
+    java
     id("org.springframework.boot") version "3.2.2"
     id("io.spring.dependency-management") version "1.1.3"
     id("org.sonarqube") version "7.0.0.6105"
     checkstyle
     jacoco
-    kotlin("kapt") version "1.9.25"
 }
 
 group = "hexlet.code"
@@ -28,14 +27,15 @@ dependencies {
 
     // MapStruct
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0") // Используем связку Lombok-MapStruct
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 
     // jackson-databind-nullable
     implementation("org.openapitools:jackson-databind-nullable:0.2.6")
 
     // Базы данных
-    runtimeOnly("com.h2database:h2") // Для разработки
-    runtimeOnly("org.postgresql:postgresql") // Для продакшена
+    runtimeOnly("com.h2database:h2")
+    runtimeOnly("org.postgresql:postgresql")
 
     // Datafaker
     implementation("net.datafaker:datafaker:2.4.3")
@@ -51,9 +51,11 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
     testImplementation("org.springframework.security:spring-security-test")
+    testCompileOnly("org.projectlombok:lombok:1.18.30")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
 }
 
-tasks.test {
+tasks.withType<Test> {
     useJUnitPlatform()
 }
 

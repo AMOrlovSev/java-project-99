@@ -1,10 +1,10 @@
 package hexlet.code.dto.user;
 
-import java.time.LocalDate;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Setter
 @Getter
@@ -14,6 +14,6 @@ public class UserDTO {
     private String firstName;
     private String lastName;
     private String email;
-    private LocalDate createdAt;
-    private LocalDate updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

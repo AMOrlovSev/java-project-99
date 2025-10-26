@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-public class UsersController {
+public class UserController {
 
     @Autowired
     private UserService userService;
@@ -48,7 +48,7 @@ public class UsersController {
         return userMapper.map(user);
     }
 
-    @PutMapping("/users/{id}")
+    @PatchMapping("/users/{id}")
     @ResponseStatus(HttpStatus.OK)
     public UserDTO update(@RequestBody @Valid UserUpdateDTO userData, @PathVariable Long id) {
         User user = userService.update(id, userData);
