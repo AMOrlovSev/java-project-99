@@ -1,37 +1,54 @@
 package hexlet.code.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.ToString;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
-@Table(name = "users")
 @Getter
 @Setter
+@EntityListeners(AuditingEntityListener.class)
+@ToString(includeFieldNames = true, onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class User {
-
+@Table(name = "users")
+public class User implements BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = IDENTITY)
+    @ToString.Include
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @Column(name = "first_name")
     private String firstName;
+
+    @Column(name = "last_name")
     private String lastName;
+
+    @Email
+    @NotBlank(message = "Email is required")
+    @Column(unique = true)
+    @ToString.Include
     private String email;
+
+    @NotBlank(message = "Minimum 3 characters")
+    @Size(min = 3)
     private String password;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+    @CreatedDate
+    private LocalDate createdAt;
 
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    @LastModifiedDate
+    private LocalDate updatedAt;
 }

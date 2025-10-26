@@ -23,6 +23,16 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
+    // Spring Security для PasswordEncoder
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+    // MapStruct
+    implementation("org.mapstruct:mapstruct:1.5.5.Final")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+
+    // jackson-databind-nullable
+    implementation("org.openapitools:jackson-databind-nullable:0.2.6")
+
     // Базы данных
     runtimeOnly("com.h2database:h2") // Для разработки
     runtimeOnly("org.postgresql:postgresql") // Для продакшена
