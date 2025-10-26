@@ -28,7 +28,7 @@ public class DataInitializer {
         if (!userRepository.existsByEmail("hexlet@example.com")) {
             User admin = new User();
             admin.setEmail("hexlet@example.com");
-            admin.setPassword(passwordEncoder.encode("qwerty"));
+            admin.setPasswordDigest(passwordEncoder.encode("qwerty"));
             admin.setFirstName("Hexlet");
             admin.setLastName("Admin");
             admin.setCreatedAt(LocalDateTime.now());
@@ -41,7 +41,7 @@ public class DataInitializer {
             user.setFirstName(faker.name().firstName());
             user.setLastName(faker.name().lastName());
             user.setEmail(faker.internet().emailAddress());
-            user.setPassword(passwordEncoder.encode(faker.internet().password()));
+            user.setPasswordDigest(passwordEncoder.encode(faker.internet().password()));
             user.setCreatedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);

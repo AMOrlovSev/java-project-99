@@ -8,3 +8,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
+rsa:
+  private-key: classpath:certs/private.pem
+  public-key: classpath:certs/public.pem

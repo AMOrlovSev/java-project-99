@@ -22,8 +22,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
-    // Spring Security для PasswordEncoder
+    // Spring Security
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 
     // MapStruct
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
@@ -46,11 +47,12 @@ dependencies {
 
     // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.instancio:instancio-junit:3.3.0")
+    testImplementation("org.instancio:instancio-junit:4.3.1")
     testImplementation("net.javacrumbs.json-unit:json-unit-assertj:3.2.2")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.instancio:instancio-core:4.3.1")
     testCompileOnly("org.projectlombok:lombok:1.18.30")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
 }

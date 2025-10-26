@@ -39,7 +39,7 @@ public class UserService {
             throw new ResourceAlreadyExistsException("User with email " + userData.getEmail() + " already exists");
         }
         User user = userMapper.map(userData);
-        user.setPassword(passwordEncoder.encode(userData.getPassword()));
+        user.setPasswordDigest(passwordEncoder.encode(userData.getPassword()));
         return userRepository.save(user);
     }
 
@@ -57,7 +57,7 @@ public class UserService {
         userMapper.update(userData, user);
 
         if (userData.getPassword() != null && userData.getPassword().isPresent()) {
-            user.setPassword(passwordEncoder.encode(userData.getPassword().get()));
+            user.setPasswordDigest(passwordEncoder.encode(userData.getPassword().get()));
         }
 
         return userRepository.save(user);
