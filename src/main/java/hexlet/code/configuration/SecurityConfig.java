@@ -32,14 +32,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector)
             throws Exception {
-        // По умолчанию все запрещено
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Разрешаем доступ без аутентификации к статическим страницам
-                        .requestMatchers("/", "/welcome", "/index.html", "/static/**").permitAll()
-                        // Разрешаем доступ только к /api/login, чтобы аутентифицироваться и получить токен
+                        // Разрешаем ВСЕ статические ресурсы без аутентификации
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/welcome",
+                                "/assets/**",
+                                "/*.js",
+                                "/*.css",
+                                "/*.ico",
+                                "/static/**",
+                                "/favicon.ico"
+                        ).permitAll()
+                        // API для логина открыт
                         .requestMatchers("/api/login").permitAll()
+                        // ВСЕ остальное требует аутентификации
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer((rs) -> rs.jwt((jwt) -> jwt.decoder(jwtDecoder)))
