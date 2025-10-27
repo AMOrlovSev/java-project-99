@@ -4,8 +4,8 @@ spring:
       on-profile: "production"
   datasource:
     url: ${DB_URL}
-    username: ${DB_USERNAME:for_all_projects_user}
-    password: ${DB_PASSWORD:RaDpGx71O4oq3i5N0c5xNnJQECran4GE}
+    username: ${DB_USERNAME}   # Убраны дефолтные значения
+    password: ${DB_PASSWORD}   # Убраны дефолтные значения
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
