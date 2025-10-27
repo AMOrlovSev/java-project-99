@@ -36,6 +36,8 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Разрешаем доступ без аутентификации к статическим страницам
+                        .requestMatchers("/", "/welcome", "/index.html", "/static/**").permitAll()
                         // Разрешаем доступ только к /api/login, чтобы аутентифицироваться и получить токен
                         .requestMatchers("/api/login").permitAll()
                         .anyRequest().authenticated())
