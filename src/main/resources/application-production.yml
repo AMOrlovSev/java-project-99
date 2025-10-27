@@ -11,3 +11,7 @@ spring:
     hibernate:
       ddl-auto: update # create/update/validate
     show-sql: false
+  web:
+    server:
+      port: 10000
+      address: 0.0.0.0
