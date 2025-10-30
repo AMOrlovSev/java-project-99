@@ -5,6 +5,7 @@ import hexlet.code.dto.authentication.AuthRequest;
 import hexlet.code.dto.user.UserCreateDTO;
 import hexlet.code.dto.user.UserUpdateDTO;
 import hexlet.code.mapper.UserMapper;
+import hexlet.code.model.Role;
 import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.util.JWTUtils;
@@ -56,11 +57,12 @@ public class UsersControllerTest {
     private JWTUtils jwtUtils;
 
     private User testUser;
-    private String jwtToken;
+    private User adminUser;
+    private String userJwtToken;
+    private String adminJwtToken;
 
     @BeforeEach
     public void setUp() {
-        // Очищаем базу перед каждым тестом
         userRepository.deleteAll();
 
         testUser = Instancio.of(User.class)
@@ -69,21 +71,101 @@ public class UsersControllerTest {
                 .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
                 .supply(Select.field(User::getLastName), () -> faker.name().lastName())
                 .supply(Select.field(User::getPasswordDigest), () -> passwordEncoder.encode("password123"))
+                .set(Select.field(User::getRole), Role.USER)
                 .create();
 
-        // Сохраняем пользователя и генерируем токен для него
+        adminUser = Instancio.of(User.class)
+                .ignore(Select.field(User::getId))
+                .supply(Select.field(User::getEmail), () -> "admin-" + faker.internet().emailAddress())
+                .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
+                .supply(Select.field(User::getLastName), () -> faker.name().lastName())
+                .supply(Select.field(User::getPasswordDigest), () -> passwordEncoder.encode("admin123"))
+                .set(Select.field(User::getRole), Role.ADMIN)
+                .create();
+
         userRepository.save(testUser);
-        jwtToken = jwtUtils.generateToken(testUser.getEmail());
+        userRepository.save(adminUser);
+
+        userJwtToken = jwtUtils.generateToken(testUser.getEmail());
+        adminJwtToken = jwtUtils.generateToken(adminUser.getEmail());
     }
 
-    private String getAuthHeader() {
-        return "Bearer " + jwtToken;
+    private String getUserAuthHeader() {
+        return "Bearer " + userJwtToken;
+    }
+
+    private String getAdminAuthHeader() {
+        return "Bearer " + adminJwtToken;
+    }
+
+    @Test
+    public void testAccessUsersListWithoutToken() throws Exception {
+        var request = get("/api/users");
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testAccessUserByIdWithoutToken() throws Exception {
+        var request = get("/api/users/" + testUser.getId());
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testUpdateUserWithoutToken() throws Exception {
+        var updateDTO = new UserUpdateDTO();
+        updateDTO.setFirstName(JsonNullable.of("Unauthorized"));
+
+        var request = put("/api/users/" + testUser.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(updateDTO));
+
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testDeleteUserWithoutToken() throws Exception {
+        var request = delete("/api/users/" + testUser.getId());
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testCreateUserWithoutToken() throws Exception {
+        var userCreateDTO = new UserCreateDTO();
+        userCreateDTO.setFirstName("New");
+        userCreateDTO.setLastName("User");
+        userCreateDTO.setEmail("newuser@example.com");
+        userCreateDTO.setPassword("password123");
+
+        var request = post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(userCreateDTO));
+
+        mockMvc.perform(request)
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    public void testLoginWithoutToken() throws Exception {
+        var authRequest = new AuthRequest();
+        authRequest.setUsername(testUser.getEmail());
+        authRequest.setPassword("password123");
+
+        var request = post("/api/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(authRequest));
+
+        mockMvc.perform(request)
+                .andExpect(status().isOk());
     }
 
     @Test
     public void testIndex() throws Exception {
         var request = get("/api/users")
-                .header("Authorization", getAuthHeader());
+                .header("Authorization", getUserAuthHeader());
 
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
@@ -102,7 +184,6 @@ public class UsersControllerTest {
         userCreateDTO.setPassword("password123");
 
         var request = post("/api/users")
-                .header("Authorization", getAuthHeader())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(userCreateDTO));
 
@@ -113,12 +194,13 @@ public class UsersControllerTest {
         assertNotNull(user);
         assertThat(user.getFirstName()).isEqualTo(userCreateDTO.getFirstName());
         assertThat(user.getEmail()).isEqualTo(userCreateDTO.getEmail());
+        assertThat(user.getRole()).isEqualTo(Role.USER);
     }
 
     @Test
     public void testShow() throws Exception {
         var request = get("/api/users/" + testUser.getId())
-                .header("Authorization", getAuthHeader());
+                .header("Authorization", getUserAuthHeader());
 
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
@@ -134,14 +216,14 @@ public class UsersControllerTest {
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdateOwnProfile() throws Exception {
         var updateDTO = new UserUpdateDTO();
         updateDTO.setFirstName(JsonNullable.of("UpdatedFirstName"));
         updateDTO.setLastName(JsonNullable.of("UpdatedLastName"));
         updateDTO.setEmail(JsonNullable.of("updated@example.com"));
 
         var request = put("/api/users/" + testUser.getId())
-                .header("Authorization", getAuthHeader())
+                .header("Authorization", getUserAuthHeader())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(updateDTO));
 
@@ -156,12 +238,54 @@ public class UsersControllerTest {
     }
 
     @Test
+    public void testUpdateOtherUserAsUser() throws Exception {
+        var user2 = Instancio.of(User.class)
+                .ignore(Select.field(User::getId))
+                .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
+                .supply(Select.field(User::getPasswordDigest), () -> passwordEncoder.encode("password123"))
+                .set(Select.field(User::getRole), Role.USER)
+                .create();
+        userRepository.save(user2);
+
+        var updateDTO = new UserUpdateDTO();
+        updateDTO.setFirstName(JsonNullable.of("Hacked"));
+
+        var request = put("/api/users/" + user2.getId())
+                .header("Authorization", getUserAuthHeader())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(updateDTO));
+
+        mockMvc.perform(request)
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testUpdateUserAsAdmin() throws Exception {
+        var updateDTO = new UserUpdateDTO();
+        updateDTO.setFirstName(JsonNullable.of("AdminUpdated"));
+        updateDTO.setLastName(JsonNullable.of("ByAdmin"));
+
+        var request = put("/api/users/" + testUser.getId())
+                .header("Authorization", getAdminAuthHeader())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(updateDTO));
+
+        mockMvc.perform(request)
+                .andExpect(status().isOk());
+
+        var updatedUser = userRepository.findById(testUser.getId()).orElse(null);
+        assertNotNull(updatedUser);
+        assertThat(updatedUser.getFirstName()).isEqualTo("AdminUpdated");
+        assertThat(updatedUser.getLastName()).isEqualTo("ByAdmin");
+    }
+
+    @Test
     public void testPartialUpdate() throws Exception {
         var updateDTO = new UserUpdateDTO();
         updateDTO.setFirstName(JsonNullable.of("PartiallyUpdated"));
 
         var request = put("/api/users/" + testUser.getId())
-                .header("Authorization", getAuthHeader())
+                .header("Authorization", getUserAuthHeader())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(updateDTO));
 
@@ -176,9 +300,39 @@ public class UsersControllerTest {
     }
 
     @Test
-    public void testDestroy() throws Exception {
+    public void testDeleteOwnProfile() throws Exception {
         var request = delete("/api/users/" + testUser.getId())
-                .header("Authorization", getAuthHeader());
+                .header("Authorization", getUserAuthHeader());
+
+        mockMvc.perform(request)
+                .andExpect(status().isNoContent());
+
+        assertThat(userRepository.existsById(testUser.getId())).isFalse();
+    }
+
+    @Test
+    public void testDeleteOtherUserAsUser() throws Exception {
+        var user2 = Instancio.of(User.class)
+                .ignore(Select.field(User::getId))
+                .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
+                .supply(Select.field(User::getPasswordDigest), () -> passwordEncoder.encode("password123"))
+                .set(Select.field(User::getRole), Role.USER)
+                .create();
+        userRepository.save(user2);
+
+        var request = delete("/api/users/" + user2.getId())
+                .header("Authorization", getUserAuthHeader());
+
+        mockMvc.perform(request)
+                .andExpect(status().isForbidden());
+
+        assertThat(userRepository.existsById(user2.getId())).isTrue();
+    }
+
+    @Test
+    public void testDeleteUserAsAdmin() throws Exception {
+        var request = delete("/api/users/" + testUser.getId())
+                .header("Authorization", getAdminAuthHeader());
 
         mockMvc.perform(request)
                 .andExpect(status().isNoContent());
@@ -191,11 +345,10 @@ public class UsersControllerTest {
         var duplicateUserDTO = new UserCreateDTO();
         duplicateUserDTO.setFirstName("Another");
         duplicateUserDTO.setLastName("User");
-        duplicateUserDTO.setEmail(testUser.getEmail()); // Дублирующий email
+        duplicateUserDTO.setEmail(testUser.getEmail());
         duplicateUserDTO.setPassword("password123");
 
         var request = post("/api/users")
-                .header("Authorization", getAuthHeader())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(duplicateUserDTO));
 
@@ -205,20 +358,19 @@ public class UsersControllerTest {
 
     @Test
     public void testUpdateWithDuplicateEmail() throws Exception {
-        // Создаем второго пользователя
         var user2 = Instancio.of(User.class)
                 .ignore(Select.field(User::getId))
                 .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
                 .supply(Select.field(User::getPasswordDigest), () -> passwordEncoder.encode("password123"))
+                .set(Select.field(User::getRole), Role.USER)
                 .create();
         userRepository.save(user2);
 
-        // Пытаемся обновить email второго пользователя на email первого
         var updateDTO = new UserUpdateDTO();
         updateDTO.setEmail(JsonNullable.of(testUser.getEmail()));
 
         var request = put("/api/users/" + user2.getId())
-                .header("Authorization", getAuthHeader())
+                .header("Authorization", getAdminAuthHeader())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(updateDTO));
 
@@ -229,7 +381,7 @@ public class UsersControllerTest {
     @Test
     public void testShowNonExistentUser() throws Exception {
         var request = get("/api/users/999999")
-                .header("Authorization", getAuthHeader());
+                .header("Authorization", getUserAuthHeader());
 
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
@@ -241,7 +393,7 @@ public class UsersControllerTest {
         updateDTO.setFirstName(JsonNullable.of("NonExistent"));
 
         var request = put("/api/users/999999")
-                .header("Authorization", getAuthHeader())
+                .header("Authorization", getAdminAuthHeader())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(updateDTO));
 
@@ -250,16 +402,7 @@ public class UsersControllerTest {
     }
 
     @Test
-    public void testAccessWithoutToken() throws Exception {
-        // Тест на доступ без токена
-        var request = get("/api/users");
-        mockMvc.perform(request)
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
     public void testAccessWithInvalidToken() throws Exception {
-        // Тест на доступ с невалидным токеном
         var request = get("/api/users")
                 .header("Authorization", "Bearer invalid-token");
 
@@ -271,7 +414,7 @@ public class UsersControllerTest {
     public void testLogin() throws Exception {
         var authRequest = new AuthRequest();
         authRequest.setUsername(testUser.getEmail());
-        authRequest.setPassword("password123"); // Пароль, который мы закодировали в setUp
+        authRequest.setPassword("password123");
 
         var request = post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -297,5 +440,57 @@ public class UsersControllerTest {
 
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testAdminCanAccessAllEndpoints() throws Exception {
+        var indexRequest = get("/api/users")
+                .header("Authorization", getAdminAuthHeader());
+        mockMvc.perform(indexRequest)
+                .andExpect(status().isOk());
+
+        var showRequest = get("/api/users/" + testUser.getId())
+                .header("Authorization", getAdminAuthHeader());
+        mockMvc.perform(showRequest)
+                .andExpect(status().isOk());
+
+        var updateDTO = new UserUpdateDTO();
+        updateDTO.setFirstName(JsonNullable.of("AdminUpdated"));
+        var updateRequest = put("/api/users/" + testUser.getId())
+                .header("Authorization", getAdminAuthHeader())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(updateDTO));
+        mockMvc.perform(updateRequest)
+                .andExpect(status().isOk());
+
+        var deleteRequest = delete("/api/users/" + testUser.getId())
+                .header("Authorization", getAdminAuthHeader());
+        mockMvc.perform(deleteRequest)
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void testUserCannotAccessOtherUsersOperations() throws Exception {
+        var user2 = Instancio.of(User.class)
+                .ignore(Select.field(User::getId))
+                .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
+                .supply(Select.field(User::getPasswordDigest), () -> passwordEncoder.encode("password123"))
+                .set(Select.field(User::getRole), Role.USER)
+                .create();
+        userRepository.save(user2);
+
+        var updateDTO = new UserUpdateDTO();
+        updateDTO.setFirstName(JsonNullable.of("Hacked"));
+        var updateRequest = put("/api/users/" + user2.getId())
+                .header("Authorization", getUserAuthHeader())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(updateDTO));
+        mockMvc.perform(updateRequest)
+                .andExpect(status().isForbidden());
+
+        var deleteRequest = delete("/api/users/" + user2.getId())
+                .header("Authorization", getUserAuthHeader());
+        mockMvc.perform(deleteRequest)
+                .andExpect(status().isForbidden());
     }
 }
