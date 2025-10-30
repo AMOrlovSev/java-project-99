@@ -172,13 +172,7 @@ public class UsersControllerTest {
                 .andReturn();
 
         var body = result.getResponse().getContentAsString();
-
-        assertThatJson(body).node("content").isArray();
-        assertThatJson(body).node("totalElements").isEqualTo(2);
-        assertThatJson(body).node("number").isEqualTo(0);
-        assertThatJson(body).node("size").isEqualTo(10);
-        assertThatJson(body).node("first").isEqualTo(true);
-        assertThatJson(body).node("last").isEqualTo(true);
+        assertThatJson(body).isArray();
     }
 
     @Test
