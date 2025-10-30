@@ -10,6 +10,7 @@ import hexlet.code.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,6 +59,7 @@ public class UsersController {
 
     @PutMapping("/users/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ROLE_ADMIN') or @userUtils.isCurrentUser(#id)")
     public UserDTO update(@RequestBody @Valid UserUpdateDTO userData, @PathVariable Long id) {
         User user = userService.update(id, userData);
         return userMapper.map(user);
@@ -65,6 +67,7 @@ public class UsersController {
 
     @DeleteMapping("/users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ROLE_ADMIN') or @userUtils.isCurrentUser(#id)")
     public void delete(@PathVariable Long id) {
         userService.delete(id);
     }

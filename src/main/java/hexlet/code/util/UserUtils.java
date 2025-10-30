@@ -17,6 +17,16 @@ public class UserUtils {
             return null;
         }
         var email = authentication.getName();
-        return userRepository.findByEmail(email).get();
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
+    public boolean isAdmin() {
+        User currentUser = getCurrentUser();
+        return currentUser != null && currentUser.getRole().equals(hexlet.code.model.Role.ADMIN);
+    }
+
+    public boolean isCurrentUser(Long userId) {
+        User currentUser = getCurrentUser();
+        return currentUser != null && currentUser.getId().equals(userId);
     }
 }

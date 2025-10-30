@@ -9,16 +9,25 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     @Autowired
     private JwtDecoder jwtDecoder;
@@ -35,7 +44,6 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Разрешаем ВСЕ статические ресурсы без аутентификации
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -47,14 +55,38 @@ public class SecurityConfig {
                                 "/static/**",
                                 "/favicon.ico"
                         ).permitAll()
-                        // API для логина открыт
                         .requestMatchers("/api/login").permitAll()
-                        // ВСЕ остальное требует аутентификации
+                        .requestMatchers("/api/users").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer((rs) -> rs.jwt((jwt) -> jwt.decoder(jwtDecoder)))
+                .oauth2ResourceServer((rs) -> rs
+                        .jwt((jwt) -> jwt
+                                .decoder(jwtDecoder)
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                        )
+                )
                 .httpBasic(Customizer.withDefaults())
                 .build();
+    }
+
+    private JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+
+            Collection<String> authorities = jwt.getClaimAsStringList("authorities");
+            if (authorities != null) {
+                return authorities.stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
+            }
+
+            String role = jwt.getClaimAsString("role");
+            if (role != null) {
+                return List.of(new SimpleGrantedAuthority("ROLE_" + role));
+            }
+            return List.of();
+        });
+        return converter;
     }
 
     @Bean

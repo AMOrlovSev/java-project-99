@@ -1,5 +1,6 @@
-package hexlet.code.util;
+package hexlet.code.data;
 
+import hexlet.code.model.Role;
 import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -23,7 +24,7 @@ public class DataInitializer {
     private Faker faker;
 
     @PostConstruct
-    public void init() {
+    public void initUsers() {
 
         if (!userRepository.existsByEmail("hexlet@example.com")) {
             User admin = new User();
@@ -31,6 +32,7 @@ public class DataInitializer {
             admin.setPasswordDigest(passwordEncoder.encode("qwerty"));
             admin.setFirstName("Hexlet");
             admin.setLastName("Admin");
+            admin.setRole(Role.ADMIN);
             admin.setCreatedAt(LocalDateTime.now());
             admin.setUpdatedAt(LocalDateTime.now());
             userRepository.save(admin);
@@ -41,11 +43,12 @@ public class DataInitializer {
             user.setFirstName(faker.name().firstName());
             user.setLastName(faker.name().lastName());
             user.setEmail(faker.internet().emailAddress());
-            user.setPasswordDigest(passwordEncoder.encode(faker.internet().password()));
+            var password = faker.internet().password();
+            user.setPasswordDigest(passwordEncoder.encode(password));
+            user.setRole(Role.USER);
             user.setCreatedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
         }
     }
-
 }
