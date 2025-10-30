@@ -12,11 +12,13 @@ import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class TaskService {
 
     @Autowired
@@ -54,6 +56,7 @@ public class TaskService {
             User assignee = userRepository.findById(taskData.getAssigneeId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + taskData.getAssigneeId()));
             task.setAssignee(assignee);
+            assignee.addAssignedTask(task);
         }
 
         return taskRepository.save(task);
@@ -63,6 +66,7 @@ public class TaskService {
         Task taskToUpdate = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found: " + id));
 
+        // Обработка статуса
         if (taskData.getStatus() != null && taskData.getStatus().isPresent()) {
             String newStatusSlug = taskData.getStatus().get();
             TaskStatus status = taskStatusRepository.findBySlug(newStatusSlug)
@@ -70,23 +74,27 @@ public class TaskService {
             taskToUpdate.setTaskStatus(status);
         }
 
+        // Упрощенная обработка исполнителя
         if (taskData.getAssigneeId() != null) {
-            if (taskData.getAssigneeId().isPresent()) {
-                Long newAssigneeId = taskData.getAssigneeId().get();
-                // Если newAssigneeId не null - находим пользователя
-                if (newAssigneeId != null) {
-                    User assignee = userRepository.findById(newAssigneeId)
-                            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + newAssigneeId));
-                    taskToUpdate.setAssignee(assignee);
-                } else {
-                    // Если явно передали null - снимаем назначение
-                    taskToUpdate.setAssignee(null);
-                }
+            // Убираем задачу из списка старого исполнителя
+            User oldAssignee = taskToUpdate.getAssignee();
+            if (oldAssignee != null) {
+                oldAssignee.getAssignedTasks().remove(taskToUpdate);
             }
-            // Если assigneeId.isPresent() = false (JsonNullable.undefined) - ничего не делаем
+
+            // Если передали конкретного исполнителя - назначаем
+            if (taskData.getAssigneeId().isPresent() && taskData.getAssigneeId().get() != null) {
+                Long newAssigneeId = taskData.getAssigneeId().get();
+                User assignee = userRepository.findById(newAssigneeId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found: " + newAssigneeId));
+                taskToUpdate.setAssignee(assignee);
+                assignee.addAssignedTask(taskToUpdate);
+            } else {
+                // Если передали null или undefined - снимаем назначение
+                taskToUpdate.setAssignee(null);
+            }
         }
 
-        // Применяем остальные обновления через маппер (только простые поля)
         taskMapper.update(taskData, taskToUpdate);
         return taskRepository.save(taskToUpdate);
     }
@@ -94,6 +102,12 @@ public class TaskService {
     public void delete(Long id) {
         Task taskToDelete = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found: " + id));
+
+        User assignee = taskToDelete.getAssignee();
+        if (assignee != null) {
+            assignee.getAssignedTasks().remove(taskToDelete);
+        }
+
         taskRepository.deleteById(id);
     }
 
