@@ -58,11 +58,18 @@ public class SecurityConfig {
                                 "/static/**",
                                 "/favicon.ico"
                         ).permitAll()
-                        // API для логина открыт
+
                         .requestMatchers("/api/login").permitAll()
-                        // ТОЛЬКО создание пользователя (регистрация) открыта для всех
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                        // ВСЕ остальные endpoints требуют аутентификации
+
+                        // Разрешаем доступ к GET-запросам статусов задач без аутентификации
+                        .requestMatchers(HttpMethod.GET, "/api/task_statuses", "/api/task_statuses/**").permitAll()
+
+                        // Все остальные операции со статусами задач требуют аутентификации
+                        .requestMatchers(HttpMethod.POST, "/api/task_statuses").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/task_statuses/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/task_statuses/**").authenticated()
+
                         .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

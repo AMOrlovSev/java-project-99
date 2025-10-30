@@ -1,7 +1,9 @@
 package hexlet.code.data;
 
 import hexlet.code.model.Role;
+import hexlet.code.model.TaskStatus;
 import hexlet.code.model.User;
+import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import net.datafaker.Faker;
@@ -10,12 +12,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 public class DataInitializer {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TaskStatusRepository taskStatusRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -50,5 +56,29 @@ public class DataInitializer {
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
         }
+    }
+
+    @PostConstruct
+    public void initTaskStatuses() {
+        List<TaskStatus> defaultStatuses = List.of(
+                createTaskStatus("Draft", "draft"),
+                createTaskStatus("ToReview", "to_review"),
+                createTaskStatus("ToBeFixed", "to_be_fixed"),
+                createTaskStatus("ToPublish", "to_publish"),
+                createTaskStatus("Published", "published")
+        );
+
+        defaultStatuses.forEach(status -> {
+            if (!taskStatusRepository.existsBySlug(status.getSlug())) {
+                taskStatusRepository.save(status);
+            }
+        });
+    }
+
+    private TaskStatus createTaskStatus(String name, String slug) {
+        TaskStatus status = new TaskStatus();
+        status.setName(name);
+        status.setSlug(slug);
+        return status;
     }
 }
