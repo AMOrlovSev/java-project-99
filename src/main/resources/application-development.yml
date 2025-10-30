@@ -10,3 +10,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+# SpringDoc для development
+springdoc:
+  swagger-ui:
+    enabled: true

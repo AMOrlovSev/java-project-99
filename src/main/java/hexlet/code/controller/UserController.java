@@ -7,6 +7,11 @@ import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.UserMapper;
 import hexlet.code.model.User;
 import hexlet.code.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +31,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Пользователи", description = "API для управления пользователями")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     @Autowired
@@ -35,6 +42,9 @@ public class UserController {
     private UserMapper userMapper;
 
     @GetMapping("/users")
+    @Operation(summary = "Получить список всех пользователей",
+            description = "Возвращает список всех зарегистрированных пользователей")
+    @ApiResponse(responseCode = "200", description = "Список пользователей успешно получен")
     public ResponseEntity<List<UserDTO>> index() {
         var users = userService.getAll();
         List<UserDTO> userDTOs = users.stream()
@@ -48,6 +58,12 @@ public class UserController {
 
     @GetMapping("/users/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Получить пользователя по ID",
+            description = "Возвращает данные пользователя по указанному идентификатору")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь успешно найден"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
     public UserDTO show(@PathVariable Long id) {
         var user = userService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User Not Found: " + id));
@@ -56,6 +72,13 @@ public class UserController {
 
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Создать нового пользователя",
+            description = "Регистрирует нового пользователя в системе")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Пользователь успешно создан"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные пользователя"),
+            @ApiResponse(responseCode = "409", description = "Пользователь с таким email уже существует")
+    })
     public UserDTO create(@Valid @RequestBody UserCreateDTO userData) {
         User user = userService.create(userData);
         return userMapper.map(user);
@@ -64,6 +87,16 @@ public class UserController {
     @PutMapping("/users/{id}")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ROLE_ADMIN') or @userUtils.isCurrentUser(#id)")
+    @Operation(summary = "Обновить данные пользователя",
+            description = "Обновляет данные существующего пользователя. "
+                    + "Только администратор или сам пользователь могут обновлять данные")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь успешно обновлен"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные пользователя"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден"),
+            @ApiResponse(responseCode = "403", description = "Недостаточно прав для выполнения операции"),
+            @ApiResponse(responseCode = "409", description = "Пользователь с таким email уже существует")
+    })
     public UserDTO update(@RequestBody @Valid UserUpdateDTO userData, @PathVariable Long id) {
         User user = userService.update(id, userData);
         return userMapper.map(user);
@@ -72,6 +105,16 @@ public class UserController {
     @DeleteMapping("/users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ROLE_ADMIN') or @userUtils.isCurrentUser(#id)")
+    @Operation(summary = "Удалить пользователя",
+            description = "Удаляет пользователя по указанному идентификатору. "
+                    + "Только администратор или сам пользователь могут удалять аккаунт")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Пользователь успешно удален"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден"),
+            @ApiResponse(responseCode = "403", description = "Недостаточно прав для выполнения операции"),
+            @ApiResponse(responseCode = "409", description = "Невозможно удалить пользователя, "
+                    + "так как с ним связаны задачи")
+    })
     public void delete(@PathVariable Long id) {
         userService.delete(id);
     }

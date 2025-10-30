@@ -56,7 +56,15 @@ public class SecurityConfig {
                                 "/*.css",
                                 "/*.ico",
                                 "/static/**",
-                                "/favicon.ico"
+                                "/favicon.ico",
+
+                                // пути для Swagger
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/api-docs",
+                                "/api-docs/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**"
                         ).permitAll()
 
                         .requestMatchers("/api/login").permitAll()
