@@ -1,8 +1,10 @@
 package hexlet.code.data;
 
+import hexlet.code.model.Label;
 import hexlet.code.model.Role;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.model.User;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -22,6 +24,9 @@ public class DataInitializer {
 
     @Autowired
     private TaskStatusRepository taskStatusRepository;
+
+    @Autowired
+    private LabelRepository labelRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -80,5 +85,25 @@ public class DataInitializer {
         status.setName(name);
         status.setSlug(slug);
         return status;
+    }
+
+    @PostConstruct
+    public void initLabels() {
+        List<Label> defaultLabels = List.of(
+                createLabel("feature"),
+                createLabel("bug")
+        );
+
+        defaultLabels.forEach(label -> {
+            if (!labelRepository.existsByName(label.getName())) {
+                labelRepository.save(label);
+            }
+        });
+    }
+
+    private Label createLabel(String name) {
+        Label label = new Label();
+        label.setName(name);
+        return label;
     }
 }

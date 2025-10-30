@@ -73,6 +73,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/tasks/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/tasks/**").authenticated()
 
+                        .requestMatchers(HttpMethod.GET, "/api/labels", "/api/labels/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/labels").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/labels/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/labels/**").authenticated()
+
                         .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

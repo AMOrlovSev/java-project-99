@@ -4,9 +4,11 @@ import hexlet.code.dto.task.TaskCreateDTO;
 import hexlet.code.dto.task.TaskUpdateDTO;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.TaskMapper;
+import hexlet.code.model.Label;
 import hexlet.code.model.Task;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.model.User;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
@@ -14,8 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -32,6 +36,9 @@ public class TaskService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private LabelRepository labelRepository;
 
     public List<Task> getAll() {
         return taskRepository.findAll();
@@ -59,6 +66,16 @@ public class TaskService {
             assignee.addAssignedTask(task);
         }
 
+        if (taskData.getLabelIds() != null) {
+            Set<Label> labels = new HashSet<>();
+            for (Long labelId : taskData.getLabelIds()) {
+                Label label = labelRepository.findById(labelId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Label not found: " + labelId));
+                labels.add(label);
+            }
+            task.setLabels(labels);
+        }
+
         return taskRepository.save(task);
     }
 
@@ -66,7 +83,6 @@ public class TaskService {
         Task taskToUpdate = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found: " + id));
 
-        // Обработка статуса
         if (taskData.getStatus() != null && taskData.getStatus().isPresent()) {
             String newStatusSlug = taskData.getStatus().get();
             TaskStatus status = taskStatusRepository.findBySlug(newStatusSlug)
@@ -74,15 +90,12 @@ public class TaskService {
             taskToUpdate.setTaskStatus(status);
         }
 
-        // Упрощенная обработка исполнителя
         if (taskData.getAssigneeId() != null) {
-            // Убираем задачу из списка старого исполнителя
             User oldAssignee = taskToUpdate.getAssignee();
             if (oldAssignee != null) {
                 oldAssignee.getAssignedTasks().remove(taskToUpdate);
             }
 
-            // Если передали конкретного исполнителя - назначаем
             if (taskData.getAssigneeId().isPresent() && taskData.getAssigneeId().get() != null) {
                 Long newAssigneeId = taskData.getAssigneeId().get();
                 User assignee = userRepository.findById(newAssigneeId)
@@ -90,9 +103,22 @@ public class TaskService {
                 taskToUpdate.setAssignee(assignee);
                 assignee.addAssignedTask(taskToUpdate);
             } else {
-                // Если передали null или undefined - снимаем назначение
                 taskToUpdate.setAssignee(null);
             }
+        }
+
+        if (taskData.getLabelIds() != null && taskData.getLabelIds().isPresent()) {
+            Set<Long> newLabelIds = taskData.getLabelIds().get();
+            Set<Label> newLabels = new HashSet<>();
+
+            for (Long labelId : newLabelIds) {
+                Label label = labelRepository.findById(labelId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Label not found: " + labelId));
+                newLabels.add(label);
+            }
+
+            taskToUpdate.getLabels().clear();
+            taskToUpdate.getLabels().addAll(newLabels);
         }
 
         taskMapper.update(taskData, taskToUpdate);
