@@ -4,13 +4,22 @@ spring:
       on-profile: "production"
   datasource:
     url: ${DB_URL}
-    username: ${DB_USERNAME}   # Убраны дефолтные значения
-    password: ${DB_PASSWORD}   # Убраны дефолтные значения
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 5
   jpa:
     hibernate:
-      ddl-auto: update # create/update/validate
+      ddl-auto: validate # Рекомендуется использовать validate в production
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  sql:
+    init:
+      mode: never
   web:
     server:
       port: ${PORT:8080}
