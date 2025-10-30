@@ -10,3 +10,5 @@
 
 ### Task Manager:
 https://java-project-99-bntq.onrender.com/
+
+swagger-ui http://localhost:8080/swagger-ui/index.html
