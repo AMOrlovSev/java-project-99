@@ -62,13 +62,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
-                        // Разрешаем доступ к GET-запросам статусов задач без аутентификации
                         .requestMatchers(HttpMethod.GET, "/api/task_statuses", "/api/task_statuses/**").permitAll()
 
-                        // Все остальные операции со статусами задач требуют аутентификации
                         .requestMatchers(HttpMethod.POST, "/api/task_statuses").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/task_statuses/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/task_statuses/**").authenticated()
+
+                        .requestMatchers(HttpMethod.GET, "/api/tasks", "/api/tasks/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/tasks").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/tasks/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/tasks/**").authenticated()
 
                         .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated())

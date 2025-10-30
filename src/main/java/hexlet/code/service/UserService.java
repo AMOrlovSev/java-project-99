@@ -30,6 +30,9 @@ public class UserService {
     @Autowired
     private UserUtils userUtils;
 
+    @Autowired
+    private TaskService taskService;
+
     public List<User> getAll() {
         return userRepository.findAll();
     }
@@ -70,6 +73,10 @@ public class UserService {
     public void delete(Long id) {
         User userToDelete = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+
+        if (taskService.hasTasksWithUser(id)) {
+            throw new ResourceAlreadyExistsException("Cannot delete user with associated tasks");
+        }
 
         userRepository.deleteById(id);
     }

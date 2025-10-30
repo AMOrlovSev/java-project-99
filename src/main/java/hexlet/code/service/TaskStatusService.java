@@ -22,6 +22,9 @@ public class TaskStatusService {
     @Autowired
     private TaskStatusMapper taskStatusMapper;
 
+    @Autowired
+    private TaskService taskService;
+
     public List<TaskStatus> getAll() {
         return taskStatusRepository.findAll();
     }
@@ -69,6 +72,10 @@ public class TaskStatusService {
     public void delete(Long id) {
         TaskStatus taskStatusToDelete = taskStatusRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task status not found: " + id));
+
+        if (taskService.hasTasksWithStatus(id)) {
+            throw new ResourceAlreadyExistsException("Cannot delete task status with associated tasks");
+        }
 
         taskStatusRepository.deleteById(id);
     }
