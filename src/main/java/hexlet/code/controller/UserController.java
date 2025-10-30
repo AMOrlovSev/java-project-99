@@ -10,6 +10,7 @@ import hexlet.code.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,7 +26,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-public class UsersController {
+public class UserController {
 
     @Autowired
     private UserService userService;
@@ -34,12 +35,15 @@ public class UsersController {
     private UserMapper userMapper;
 
     @GetMapping("/users")
-    @ResponseStatus(HttpStatus.OK)
-    public List<UserDTO> index() {
+    public ResponseEntity<List<UserDTO>> index() {
         var users = userService.getAll();
-        return users.stream()
+        List<UserDTO> userDTOs = users.stream()
                 .map(userMapper::map)
                 .toList();
+
+        return ResponseEntity.ok()
+                .header("X-Total-Count", String.valueOf(userDTOs.size()))
+                .body(userDTOs);
     }
 
     @GetMapping("/users/{id}")
