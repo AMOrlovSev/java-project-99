@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 errors.put(error.getField(), error.getDefaultMessage())
         );
-        return ResponseEntity.unprocessableEntity().body(errors);
+        return ResponseEntity.badRequest().body(errors);
     }
 
     @ExceptionHandler(ResourceAlreadyExistsException.class)
