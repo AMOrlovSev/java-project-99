@@ -41,7 +41,7 @@ REST API для управления задачами с поддержкой п
 ## 📚 API Документация
 
 После запуска приложения документация доступна по адресу:
-- Swagger UI: `https://java-project-99-bntq.onrender.com/swagger-ui/index.html`
+- **Swagger UI**: https://java-project-99-bntq.onrender.com/swagger-ui/index.html
 
 ## 🔐 Аутентификация
 
