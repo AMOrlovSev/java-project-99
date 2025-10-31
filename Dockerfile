@@ -1,22 +1,23 @@
-FROM eclipse-temurin:21-jdk
+# Build
+FROM eclipse-temurin:21-jdk AS build
 
 WORKDIR /app
 
-COPY gradlew .
-RUN chmod +x gradlew
-
+COPY gradlew ./
 COPY gradle gradle
-COPY build.gradle.kts .
-COPY settings.gradle.kts .
-
-RUN ./gradlew --no-daemon dependencies
+COPY build.gradle.kts settings.gradle.kts ./
 
 COPY src src
 COPY config config
 
-RUN ./gradlew --no-daemon bootJar
+RUN chmod +x gradlew
+RUN ./gradlew --no-daemon clean build -x test -x checkstyleMain -x checkstyleTest --stacktrace
 
-ENV JAVA_OPTS="-Xmx512M -Xms512M"
-EXPOSE 7070
+# Run
+FROM eclipse-temurin:21-jdk
 
-CMD ["java", "-jar", "build/libs/app-0.0.1-SNAPSHOT.jar"]
+WORKDIR /app
+COPY --from=build /app/build/libs/*.jar app.jar
+
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

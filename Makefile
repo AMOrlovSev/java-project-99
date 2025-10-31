@@ -1,25 +1,37 @@
+.DEFAULT_GOAL := build-run
+
 setup:
-	chmod +x ./gradlew
-	./gradlew wrapper --gradle-version 8.13
-	cd frontend && npm ci
-	./gradlew build installDist
-
-install:
-	./gradlew installDist
-
-start:
-	./gradlew run
-
-build:
-	./gradlew build
-
-test:
-	./gradlew test
+	./gradlew wrapper --gradle-version 8.10
 
 clean:
 	./gradlew clean
 
-check-updates:
-	./gradlew dependencyUpdates
+build:
+	./gradlew clean build
 
-.PHONY: setup install start build test clean check-updates
+install:
+	./gradlew clean install
+
+run-dist:
+	./build/install/app/bin/app
+
+run:
+	./gradlew run
+
+test:
+	./gradlew test
+
+report:
+	./gradlew jacocoTestReport
+
+lint:
+	./gradlew checkstyleMain
+
+update-deps:
+	./gradlew refreshVersions
+	# ./gradlew dependencyUpdates -Drevision=release
+
+
+build-run: build run
+
+.PHONY: build
