@@ -23,5 +23,5 @@ public class TaskCreateDTO {
 
     private Long assigneeId;
 
-    private Set<Long> labelIds;
+    private Set<Long> taskLabelIds;
 }

@@ -73,9 +73,9 @@ public class TaskService {
             assignee.addAssignedTask(task);
         }
 
-        if (taskData.getLabelIds() != null) {
+        if (taskData.getTaskLabelIds() != null && !taskData.getTaskLabelIds().isEmpty()) {
             Set<Label> labels = new HashSet<>();
-            for (Long labelId : taskData.getLabelIds()) {
+            for (Long labelId : taskData.getTaskLabelIds()) {
                 Label label = labelRepository.findById(labelId)
                         .orElseThrow(() -> new ResourceNotFoundException("Label not found: " + labelId));
                 labels.add(label);
@@ -114,8 +114,8 @@ public class TaskService {
             }
         }
 
-        if (taskData.getLabelIds() != null && taskData.getLabelIds().isPresent()) {
-            Set<Long> newLabelIds = taskData.getLabelIds().get();
+        if (taskData.getTaskLabelIds() != null && taskData.getTaskLabelIds().isPresent()) {
+            Set<Long> newLabelIds = taskData.getTaskLabelIds().get();
             Set<Label> newLabels = new HashSet<>();
 
             for (Long labelId : newLabelIds) {
