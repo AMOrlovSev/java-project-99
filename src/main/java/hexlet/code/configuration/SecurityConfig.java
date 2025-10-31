@@ -45,14 +45,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector)
             throws Exception {
         return http
-                // Enable CSRF but disable for API endpoints
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers(
-                                "/api/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**"
-                        )
-                )
+                // CSRF protection is disabled for this stateless REST API
+                // Rationale:
+                // - The application uses JWT tokens in Authorization header, not session cookies
+                // - Stateless session management (SessionCreationPolicy.STATELESS)
+                // - No browser-based form submissions vulnerable to CSRF
+                // - REST APIs typically don't require CSRF protection
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
