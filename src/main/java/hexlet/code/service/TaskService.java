@@ -13,6 +13,9 @@ import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,10 @@ public class TaskService {
 
     @Autowired
     private LabelRepository labelRepository;
+
+    public Page<Task> getAll(Specification<Task> spec, Pageable pageable) {
+        return taskRepository.findAll(spec, pageable);
+    }
 
     public List<Task> getAll() {
         return taskRepository.findAll();

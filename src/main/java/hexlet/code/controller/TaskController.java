@@ -2,28 +2,35 @@ package hexlet.code.controller;
 
 import hexlet.code.dto.task.TaskCreateDTO;
 import hexlet.code.dto.task.TaskDTO;
+import hexlet.code.dto.task.TaskParamsDTO;
 import hexlet.code.dto.task.TaskUpdateDTO;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.TaskMapper;
 import hexlet.code.model.Task;
 import hexlet.code.service.TaskService;
+import hexlet.code.specification.TaskSpecification;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,21 +48,35 @@ public class TaskController {
     @Autowired
     private TaskMapper taskMapper;
 
+    @Autowired
+    private TaskSpecification taskSpecification;
+
     @GetMapping("/tasks")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Получить список всех задач", description = "Возвращает список всех задач с пагинацией")
+    @Operation(summary = "Получить список всех задач",
+            description = "Возвращает список всех задач с возможностью фильтрации по названию, "
+                    + "исполнителю, статусу и метке. Поддерживает пагинацию через параметр page.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Список задач успешно получен"),
             @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован")
     })
-    public ResponseEntity<List<TaskDTO>> index() {
-        var tasks = taskService.getAll();
-        List<TaskDTO> taskDTOs = tasks.stream()
+    @Parameter(name = "titleCont", description = "Фильтр по названию задачи (содержит подстроку)", example = "create")
+    @Parameter(name = "assigneeId", description = "Фильтр по ID исполнителя", example = "1")
+    @Parameter(name = "status", description = "Фильтр по слагу статуса", example = "to_be_fixed")
+    @Parameter(name = "labelId", description = "Фильтр по ID метки", example = "1")
+    @Parameter(name = "page", description = "Номер страницы для пагинации", example = "1")
+    public ResponseEntity<List<TaskDTO>> index(
+            @ModelAttribute TaskParamsDTO params,
+            @RequestParam(defaultValue = "1") int page) {
+
+        var spec = taskSpecification.build(params);
+        Page<Task> tasksPage = taskService.getAll(spec, PageRequest.of(page - 1, 10));
+        List<TaskDTO> taskDTOs = tasksPage.getContent().stream()
                 .map(taskMapper::map)
                 .toList();
 
         return ResponseEntity.ok()
-                .header("X-Total-Count", String.valueOf(taskDTOs.size()))
+                .header("X-Total-Count", String.valueOf(tasksPage.getTotalElements()))
                 .body(taskDTOs);
     }
 
