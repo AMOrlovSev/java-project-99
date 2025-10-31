@@ -143,10 +143,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+         configuration.setAllowedOriginPatterns(List.of(
+             "http://localhost:[0-9]+",
+             "http://127.0.0.1:[0-9]+",
+             "https://java-project-99-bntq.onrender.com"
+         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type", "X-Total-Count"));
-        configuration.setExposedHeaders(List.of("X-Total-Count")); // Разрешаем фронтенду видеть этот заголовок
+        configuration.setExposedHeaders(List.of("X-Total-Count"));
         configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
