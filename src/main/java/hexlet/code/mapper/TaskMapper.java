@@ -34,7 +34,7 @@ public abstract class TaskMapper {
     @Mapping(source = "description", target = "content")
     @Mapping(source = "taskStatus.slug", target = "status")
     @Mapping(source = "assignee.id", target = "assigneeId")
-    @Mapping(source = "labels", target = "labelIds")
+    @Mapping(source = "labels", target = "taskLabelIds")
     public abstract TaskDTO map(Task model);
 
     @Mapping(source = "title", target = "name")
@@ -45,7 +45,7 @@ public abstract class TaskMapper {
     public abstract void update(TaskUpdateDTO dto, @MappingTarget Task model);
 
     // Маппинг для labelIds
-    protected Set<Long> mapLabelsToLabelIds(Set<Label> labels) {
+    protected Set<Long> mapLabelsToTaskLabelIds(Set<Label> labels) {
         if (labels == null) {
             return Set.of();
         }
