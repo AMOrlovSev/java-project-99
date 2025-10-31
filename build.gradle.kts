@@ -5,7 +5,6 @@ plugins {
     id("org.sonarqube") version "7.0.0.6105"
     checkstyle
     jacoco
-    id("io.sentry.jvm.gradle") version "5.12.1"
 }
 
 group = "hexlet.code"
@@ -82,12 +81,4 @@ tasks.jacocoTestReport {
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
-}
-
-sentry {
-    includeSourceContext = true
-
-    org = "amorlovsev"
-    projectName = "java-spring-boot"
-    authToken = System.getenv("SENTRY_AUTH_TOKEN")
 }

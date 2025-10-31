@@ -1,6 +1,5 @@
 package hexlet.code.controller;
 
-import io.sentry.Sentry;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,8 +21,8 @@ public class DebugController {
         try {
             throw new RuntimeException("This is a test exception for Sentry");
         } catch (Exception e) {
-            Sentry.captureException(e);
-            return "Test exception sent to Sentry";
+            // Sentry.captureException(e);
+            return "Test exception generated (Sentry disabled)";
         }
     }
 
@@ -32,7 +31,7 @@ public class DebugController {
     @Operation(summary = "Тест сообщения Sentry", description = "Отправляет тестовое сообщение в Sentry")
     @ApiResponse(responseCode = "200", description = "Тест выполнен")
     public String testSentryMessage() {
-        Sentry.captureMessage("Test message from Task Manager API", io.sentry.SentryLevel.INFO);
-        return "Test message sent to Sentry";
+        // Sentry.captureMessage("Test message from Task Manager API", io.sentry.SentryLevel.INFO);
+        return "Test message (Sentry disabled)";
     }
 }
