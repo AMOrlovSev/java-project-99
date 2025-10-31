@@ -372,4 +372,82 @@ public class TaskControllerTest {
         mockMvc.perform(delete("/api/tasks/{id}", testTask.getId()))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @WithMockUser
+    void testGetTasksWithFilters() throws Exception {
+        TaskStatus newStatus = new TaskStatus();
+        newStatus.setName("Review");
+        newStatus.setSlug("review");
+        newStatus.setCreatedAt(LocalDateTime.now());
+        newStatus = taskStatusRepository.save(newStatus);
+
+        Task filteredTask = new Task();
+        filteredTask.setName("Filtered Task");
+        filteredTask.setDescription("This should be filtered");
+        filteredTask.setIndex(100);
+        filteredTask.setTaskStatus(newStatus);
+        filteredTask.setAssignee(testUser);
+        filteredTask.setCreatedAt(LocalDateTime.now());
+        taskRepository.save(filteredTask);
+
+        mockMvc.perform(get("/api/tasks")
+                        .header("Authorization", "Bearer " + authToken)
+                        .param("titleCont", "Filtered")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$[0].title").value("Filtered Task"));
+
+        mockMvc.perform(get("/api/tasks")
+                        .header("Authorization", "Bearer " + authToken)
+                        .param("status", "review")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$[0].status").value("review"));
+
+        mockMvc.perform(get("/api/tasks")
+                        .header("Authorization", "Bearer " + authToken)
+                        .param("titleCont", "Filtered")
+                        .param("status", "review")
+                        .param("assigneeId", testUser.getId().toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$[0].title").value("Filtered Task"))
+                .andExpect(jsonPath("$[0].status").value("review"))
+                .andExpect(jsonPath("$[0].assigneeId").value(testUser.getId()));
+    }
+
+    @Test
+    @WithMockUser
+    void testGetTasksWithPagination() throws Exception {
+        for (int i = 2; i <= 15; i++) {
+            Task task = new Task();
+            task.setName("Task " + i);
+            task.setDescription("Description " + i);
+            task.setIndex(i);
+            task.setTaskStatus(testStatus);
+            task.setAssignee(testUser);
+            task.setCreatedAt(LocalDateTime.now());
+            taskRepository.save(task);
+        }
+
+        mockMvc.perform(get("/api/tasks")
+                        .header("Authorization", "Bearer " + authToken)
+                        .param("page", "1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "15"))
+                .andExpect(jsonPath("$.length()").value(10));
+
+        mockMvc.perform(get("/api/tasks")
+                        .header("Authorization", "Bearer " + authToken)
+                        .param("page", "2")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "15"))
+                .andExpect(jsonPath("$.length()").value(5));
+    }
 }

@@ -11,6 +11,10 @@ import jakarta.persistence.criteria.JoinType;
 public class TaskSpecification {
 
     public Specification<Task> build(TaskParamsDTO params) {
+        if (params == null) {
+            return Specification.where(null);
+        }
+
         return withTitleCont(params.getTitleCont())
                 .and(withAssigneeId(params.getAssigneeId()))
                 .and(withStatus(params.getStatus()))
