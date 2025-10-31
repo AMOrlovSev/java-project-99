@@ -25,6 +25,9 @@ springdoc:
 
 sentry:
   dsn: https://82bb966831abe9f39d493b357ac696a5@o4510283776327680.ingest.de.sentry.io/4510283784978512
-  # Add data like request headers and IP for users,
-  # see https://docs.sentry.io/platforms/java/guides/spring-boot/data-management/data-collected/ for more info
+  environment: production
   send-default-pii: true
+  tracing:
+    enabled: true
+    traces-sample-rate: 1.0
+  exception-resolver-order: -10  # Ensure Sentry runs before custom exception handlers
