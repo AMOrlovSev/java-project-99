@@ -41,6 +41,7 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService userService;
 
+    @SuppressWarnings("java:S4502") // CSRF disabled intentionally for stateless REST API
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector)
             throws Exception {
