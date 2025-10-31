@@ -15,3 +15,8 @@ spring:
 springdoc:
   swagger-ui:
     enabled: true
+
+# Sentry для development (можно отключить)
+sentry:
+  dsn: ""
+  environment: development

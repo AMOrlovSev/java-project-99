@@ -22,3 +22,9 @@ springdoc:
     enabled: true
   api-docs:
     enabled: true
+
+# Конфигурация Sentry
+sentry:
+  dsn: https://82bb966831abe9f39d493b357ac696a5@o4510283776327680.ingest.de.sentry.io/4510283784978512
+  send-default-pii: true
+  environment: production

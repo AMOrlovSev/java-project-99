@@ -5,7 +5,6 @@ plugins {
     id("org.sonarqube") version "7.0.0.6105"
     checkstyle
     jacoco
-    id("io.sentry.jvm.gradle") version "5.12.1"
 }
 
 group = "hexlet.code"
@@ -49,6 +48,10 @@ dependencies {
     // Swagger UI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
 
+    // Sentry
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.8.0")
+    implementation("io.sentry:sentry-logback:7.8.0")
+
     // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.instancio:instancio-junit:4.3.1")
@@ -82,12 +85,4 @@ tasks.jacocoTestReport {
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
-}
-
-sentry {
-    includeSourceContext = true
-
-    org = "amorlovsev"
-    projectName = "java-spring-boot"
-    authToken = System.getenv("SENTRY_AUTH_TOKEN")
 }

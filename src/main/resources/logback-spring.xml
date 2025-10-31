@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty scope="context" name="sentryDsn" source="sentry.dsn"/>
+    <springProperty scope="context" name="sentryEnvironment" source="sentry.environment" defaultValue="development"/>
+
+    <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
+        <options>
+            <dsn>${sentryDsn}</dsn>
+            <environment>${sentryEnvironment}</environment>
+            <release>task-manager@1.0.0</release>
+            <sendDefaultPii>true</sendDefaultPii>
+            <enableExternalConfiguration>true</enableExternalConfiguration>
+        </options>
+        <minimumEventLevel>WARN</minimumEventLevel>
+        <minimumBreadcrumbLevel>DEBUG</minimumBreadcrumbLevel>
+    </appender>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="SENTRY"/>
+    </root>
+</configuration>
