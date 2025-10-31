@@ -2,7 +2,7 @@ setup:
 	chmod +x ./gradlew
 	./gradlew wrapper --gradle-version 8.13
 	cd frontend && npm ci
-	cd code && ./gradlew build installDist
+	./gradlew build installDist
 
 install:
 	./gradlew installDist
