@@ -65,13 +65,17 @@ public class SecurityConfig {
                                 "/static/**",
                                 "/favicon.ico",
 
-                                // пути для Swagger
+                                // пути для Swagger - разрешаем всем
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
+                                "/swagger-ui/index.html",
                                 "/api-docs",
                                 "/api-docs/**",
                                 "/v3/api-docs",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/webjars/**",
+                                "/swagger-resources/**",
+                                "/swagger-config/**"
                         ).permitAll()
 
                         .requestMatchers("/api/login").permitAll()
