@@ -29,7 +29,7 @@ dependencies {
 
     // MapStruct
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
-    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0") // Используем связку Lombok-MapStruct
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 
     // jackson-databind-nullable
@@ -46,12 +46,12 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
 
-    //swagger-ui
+    // Swagger UI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
 
     // Sentry
-    implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.8.0")
-    implementation("io.sentry:sentry-logback:7.8.0")
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.22.0")
+    implementation("io.sentry:sentry-logback:8.22.0")
 
     // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -77,7 +77,7 @@ sonar {
 }
 
 tasks.test {
-    finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
+    finalizedBy(tasks.jacocoTestReport)
 }
 
 tasks.jacocoTestReport {
@@ -94,4 +94,8 @@ sentry {
     org = "amorlovsev"
     projectName = "java-spring-boot"
     authToken = System.getenv("SENTRY_AUTH_TOKEN")
+
+    autoInstallation {
+        sentryVersion.set("8.22.0")
+    }
 }

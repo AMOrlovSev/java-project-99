@@ -16,18 +16,20 @@ spring:
       port: ${PORT:8080}
       address: 0.0.0.0
 
-# SpringDoc для production (можно отключить UI если нужно)
+# SpringDoc для production
 springdoc:
   swagger-ui:
     enabled: true
   api-docs:
     enabled: true
 
+# Конфигурация Sentry для версии 8.x
 sentry:
   dsn: https://82bb966831abe9f39d493b357ac696a5@o4510283776327680.ingest.de.sentry.io/4510283784978512
-  environment: production
   send-default-pii: true
+  # Дополнительные настройки для версии 8.x
   tracing:
     enabled: true
-    traces-sample-rate: 1.0
-  exception-resolver-order: -10  # Ensure Sentry runs before custom exception handlers
+  profiles:
+    include:
+      - production
