@@ -1,5 +1,5 @@
 plugins {
-    java
+    application
     id("org.springframework.boot") version "3.2.2"
     id("io.spring.dependency-management") version "1.1.3"
     id("org.sonarqube") version "7.0.0.6105"
@@ -12,6 +12,10 @@ version = "0.0.1-SNAPSHOT"
 
 repositories {
     mavenCentral()
+}
+
+application {
+    mainClass = "hexlet.code.AppApplication"
 }
 
 dependencies {
