@@ -1,5 +1,6 @@
 package hexlet.code.data;
 
+import hexlet.code.configuration.AdminConfig;
 import hexlet.code.model.Label;
 import hexlet.code.model.Role;
 import hexlet.code.model.TaskStatus;
@@ -34,13 +35,15 @@ public class DataInitializer {
     @Autowired
     private Faker faker;
 
+    @Autowired
+    private AdminConfig adminConfig;
+
     @PostConstruct
     public void initUsers() {
-
-        if (!userRepository.existsByEmail("hexlet@example.com")) {
+        if (!userRepository.existsByEmail(adminConfig.getEmail())) {
             User admin = new User();
-            admin.setEmail("hexlet@example.com");
-            admin.setPasswordDigest(passwordEncoder.encode("qwerty"));
+            admin.setEmail(adminConfig.getEmail());
+            admin.setPasswordDigest(passwordEncoder.encode(adminConfig.getPassword()));
             admin.setFirstName("Hexlet");
             admin.setLastName("Admin");
             admin.setRole(Role.ADMIN);
