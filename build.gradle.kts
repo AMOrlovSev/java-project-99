@@ -49,10 +49,6 @@ dependencies {
     // Swagger UI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
 
-    // Sentry
-    implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.22.0")
-    implementation("io.sentry:sentry-logback:8.22.0")
-
     // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.instancio:instancio-junit:4.3.1")
@@ -94,8 +90,4 @@ sentry {
     org = "amorlovsev"
     projectName = "java-spring-boot"
     authToken = System.getenv("SENTRY_AUTH_TOKEN")
-
-    autoInstallation {
-        sentryVersion.set("8.22.0")
-    }
 }
