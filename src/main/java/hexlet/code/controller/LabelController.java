@@ -40,7 +40,6 @@ public class LabelController {
     private final LabelMapper labelMapper;
 
     @GetMapping("/labels")
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Получить список всех меток", description = "Возвращает список всех доступных меток")
     @ApiResponse(responseCode = "200", description = "Список меток успешно получен")
     public ResponseEntity<List<LabelDTO>> index() {
@@ -56,7 +55,6 @@ public class LabelController {
 
     @GetMapping("/labels/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Получить метку по ID", description = "Возвращает метку по указанному идентификатору")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Метка успешно найдена"),
@@ -70,7 +68,6 @@ public class LabelController {
 
     @PostMapping("/labels")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Создать новую метку", description = "Создает новую метку с указанным названием")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Метка успешно создана"),
@@ -85,7 +82,6 @@ public class LabelController {
 
     @PutMapping("/labels/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Обновить метку", description = "Обновляет данные существующей метки")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Метка успешно обновлена"),
@@ -101,7 +97,6 @@ public class LabelController {
 
     @DeleteMapping("/labels/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Удалить метку", description = "Удаляет метку по указанному идентификатору")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Метка успешно удалена"),

@@ -43,14 +43,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector)
             throws Exception {
         return http
-                // CSRF protection is disabled for this stateless REST API
-                // Rationale:
-                // - The application uses JWT tokens in Authorization header, not session cookies
-                // - Stateless session management (SessionCreationPolicy.STATELESS)
-                // - No browser-based form submissions vulnerable to CSRF
-                // - REST APIs typically don't require CSRF protection
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Публичные endpoints
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -62,7 +57,7 @@ public class SecurityConfig {
                                 "/static/**",
                                 "/favicon.ico",
 
-                                // пути для Swagger - разрешаем всем
+                                // Swagger endpoints
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/swagger-ui/index.html",
@@ -75,26 +70,9 @@ public class SecurityConfig {
                                 "/swagger-config/**"
                         ).permitAll()
 
+                        // Аутентификация
                         .requestMatchers("/api/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/task_statuses", "/api/task_statuses/**").permitAll()
-
-                        .requestMatchers(HttpMethod.POST, "/api/task_statuses").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/task_statuses/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/task_statuses/**").authenticated()
-
-                        .requestMatchers(HttpMethod.GET, "/api/tasks", "/api/tasks/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/tasks").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/tasks/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/tasks/**").authenticated()
-
-                        .requestMatchers(HttpMethod.GET, "/api/labels", "/api/labels/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/labels").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/labels/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/labels/**").authenticated()
-
-                        .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer((rs) -> rs
@@ -144,11 +122,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-         configuration.setAllowedOriginPatterns(List.of(
-             "http://localhost:[0-9]+",
-             "http://127.0.0.1:[0-9]+",
-             "https://java-project-99-bntq.onrender.com"
-         ));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:[0-9]+",
+                "http://127.0.0.1:[0-9]+",
+                "https://java-project-99-bntq.onrender.com"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type", "X-Total-Count"));
         configuration.setExposedHeaders(List.of("X-Total-Count"));

@@ -70,7 +70,6 @@ public class TaskStatusController {
 
     @PostMapping("/task_statuses")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Создать новый статус задачи",
             description = "Создает новый статус задачи с указанными параметрами")
     @ApiResponses(value = {
@@ -86,7 +85,6 @@ public class TaskStatusController {
 
     @PutMapping("/task_statuses/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Обновить статус задачи", description = "Обновляет данные существующего статуса задачи")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Статус задачи успешно обновлен"),
@@ -102,7 +100,6 @@ public class TaskStatusController {
 
     @DeleteMapping("/task_statuses/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Удалить статус задачи", description = "Удаляет статус задачи по указанному идентификатору")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Статус задачи успешно удален"),

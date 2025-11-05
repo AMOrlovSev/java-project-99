@@ -48,7 +48,6 @@ public class TaskController {
     private final TaskSpecification taskSpecification;
 
     @GetMapping("/tasks")
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Получить список всех задач",
             description = "Возвращает список всех задач с возможностью фильтрации по названию, "
                     + "исполнителю, статусу и метке. Поддерживает пагинацию через параметр page.")
@@ -78,7 +77,6 @@ public class TaskController {
 
     @GetMapping("/tasks/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Получить задачу по ID", description = "Возвращает задачу по указанному идентификатору")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Задача успешно найдена"),
@@ -93,7 +91,6 @@ public class TaskController {
 
     @PostMapping("/tasks")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Создать новую задачу", description = "Создает новую задачу с указанными параметрами")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Задача успешно создана"),
@@ -108,7 +105,6 @@ public class TaskController {
 
     @PutMapping("/tasks/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Обновить задачу", description = "Обновляет данные существующей задачи")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Задача успешно обновлена"),
@@ -123,7 +119,6 @@ public class TaskController {
 
     @DeleteMapping("/tasks/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Удалить задачу", description = "Удаляет задачу по указанному идентификатору")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Задача успешно удалена"),
