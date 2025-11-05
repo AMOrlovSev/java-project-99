@@ -1,6 +1,5 @@
 package hexlet.code.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -66,7 +65,6 @@ public class User implements UserDetails, BaseEntity {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "assignee")
-    @JsonIgnore
     private List<Task> assignedTasks = new ArrayList<>();
 
     public void addAssignedTask(Task task) {
