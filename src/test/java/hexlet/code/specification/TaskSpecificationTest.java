@@ -1,13 +1,14 @@
 package hexlet.code.specification;
 
+import hexlet.code.DatabaseCleanerExtension;
 import hexlet.code.dto.task.TaskParamsDTO;
 import hexlet.code.model.Task;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.datasource.url=jdbc:h2:mem:testdb",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-@Transactional
+@ExtendWith(DatabaseCleanerExtension.class)
 public class TaskSpecificationTest {
 
     @Autowired
@@ -28,7 +29,6 @@ public class TaskSpecificationTest {
         Specification<Task> spec = taskSpecification.build(params);
 
         assertThat(spec).isNotNull();
-
         assertThat(spec).isEqualTo(Specification.where(null));
     }
 

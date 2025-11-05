@@ -1,12 +1,13 @@
 package hexlet.code.model;
 
+import hexlet.code.DatabaseCleanerExtension;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.datasource.url=jdbc:h2:mem:testdb",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-@Transactional
+@ExtendWith(DatabaseCleanerExtension.class)
 public class TaskStatusAdditionalTest {
 
     @Autowired
@@ -82,12 +83,10 @@ public class TaskStatusAdditionalTest {
         task.setIndex(1);
         task.setCreatedAt(LocalDateTime.now());
 
-        // Test addTask
         taskStatus.addTask(task);
         assertThat(taskStatus.getTasks()).hasSize(1);
         assertThat(task.getTaskStatus()).isEqualTo(taskStatus);
 
-        // Test removeTask
         taskStatus.removeTask(task);
         assertThat(taskStatus.getTasks()).isEmpty();
         assertThat(task.getTaskStatus()).isNull();
@@ -106,10 +105,9 @@ public class TaskStatusAdditionalTest {
     @Test
     void testTaskStatusValidation() {
         TaskStatus taskStatus = new TaskStatus();
-        taskStatus.setName("S"); // Too short - should fail validation
-        taskStatus.setSlug("s"); // Too short - should fail validation
+        taskStatus.setName("S");
+        taskStatus.setSlug("s");
 
-        // This would normally be tested with @Valid in controller tests
         assertThat(taskStatus.getName()).isEqualTo("S");
         assertThat(taskStatus.getSlug()).isEqualTo("s");
     }
@@ -121,13 +119,10 @@ public class TaskStatusAdditionalTest {
         status1.setSlug("unique_status");
         taskStatusRepository.save(status1);
 
-        // Try to create another with same name (should fail in database)
         TaskStatus status2 = new TaskStatus();
         status2.setName("Unique Status");
         status2.setSlug("different_slug");
 
-        // The save might succeed in test due to transaction rollback
-        // but we can verify the objects are different
         assertThat(status1).isNotEqualTo(status2);
     }
 

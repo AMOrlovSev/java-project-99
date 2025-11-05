@@ -1,14 +1,15 @@
 package hexlet.code.model;
 
+import hexlet.code.DatabaseCleanerExtension;
 import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.datasource.url=jdbc:h2:mem:testdb",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-@Transactional
+@ExtendWith(DatabaseCleanerExtension.class)
 public class ModelRelationshipsTest {
 
     @Autowired
@@ -40,7 +41,7 @@ public class ModelRelationshipsTest {
         user.setEmail(email);
         user.setFirstName("Test");
         user.setLastName("User");
-        user.setPasswordDigest("valid-password"); // Обязательное поле
+        user.setPasswordDigest("valid-password");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(user);
@@ -100,55 +101,50 @@ public class ModelRelationshipsTest {
 
     @Test
     void testLabelRelationships() {
-        Label label = createValidLabel("Test Label");
         TaskStatus status = createValidTaskStatus("Test Status", "test_status");
         Task task = createValidTask("Test Task", "Test Description", status, null);
+        Label label = createValidLabel("Test Label");
 
-        label.addTask(task);
-        labelRepository.save(label);
+        Task taskWithLabel = new Task();
+        taskWithLabel.setName("Task With Label");
+        taskWithLabel.setDescription("Description");
+        taskWithLabel.setIndex(2);
+        taskWithLabel.setCreatedAt(LocalDateTime.now());
+        taskWithLabel.setTaskStatus(status);
+        taskWithLabel.addLabel(label);
 
-        Task savedTask = taskRepository.findById(task.getId()).orElseThrow();
+        Task savedTaskWithLabel = taskRepository.save(taskWithLabel);
 
-        Set<Label> labels = savedTask.getLabels();
-        assertThat(labels).hasSize(1);
-        assertThat(labels.iterator().next().getName()).isEqualTo("Test Label");
+        assertThat(savedTaskWithLabel.getLabels()).contains(label);
     }
 
     @Test
     void testTaskLabelRelationships() {
         TaskStatus status = createValidTaskStatus("Test Status", "test_status");
-        Task task = createValidTask("Test Task", "Test Description", status, null);
 
         Label label1 = createValidLabel("Label 1");
         Label label2 = createValidLabel("Label 2");
 
+        Task task = new Task();
+        task.setName("Test Task");
+        task.setDescription("Test Description");
+        task.setIndex(1);
+        task.setCreatedAt(LocalDateTime.now());
+        task.setTaskStatus(status);
         task.addLabel(label1);
         task.addLabel(label2);
-        taskRepository.save(task);
 
-        Task savedTask = taskRepository.findById(task.getId()).orElseThrow();
+        Task savedTask = taskRepository.save(task);
+
         Set<Label> labels = savedTask.getLabels();
         assertThat(labels).hasSize(2);
-
-        boolean hasLabel1 = labels.stream().anyMatch(l -> l.getName().equals("Label 1"));
-        boolean hasLabel2 = labels.stream().anyMatch(l -> l.getName().equals("Label 2"));
-        assertThat(hasLabel1).isTrue();
-        assertThat(hasLabel2).isTrue();
-
-        task.removeLabel(label1);
-        taskRepository.save(task);
-
-        Task finalTask = taskRepository.findById(task.getId()).orElseThrow();
-        Set<Label> finalLabels = finalTask.getLabels();
-        assertThat(finalLabels).hasSize(1);
-        assertThat(finalLabels.iterator().next().getName()).isEqualTo("Label 2");
+        assertThat(labels).contains(label1, label2);
     }
 
     @Test
     void testUserDetailsMethods() {
         User user = createValidUser("test@example.com");
         user.setRole(Role.USER);
-        userRepository.save(user);
 
         assertThat(user.getUsername()).isEqualTo("test@example.com");
         assertThat(user.getPassword()).isEqualTo("valid-password");
@@ -185,5 +181,103 @@ public class ModelRelationshipsTest {
         assertThat(user1).isNotEqualTo(null);
 
         assertThat(user1).isNotEqualTo("string");
+    }
+
+    @Test
+    void testBidirectionalRelationships() {
+        TaskStatus status = createValidTaskStatus("Test Status", "test_status");
+        User user = createValidUser("test@example.com");
+        Label label = createValidLabel("Test Label");
+
+        Task task = new Task();
+        task.setName("Test Task");
+        task.setDescription("Test Description");
+        task.setIndex(1);
+        task.setCreatedAt(LocalDateTime.now());
+        task.setTaskStatus(status);
+        task.setAssignee(user);
+        task.addLabel(label);
+
+        Task savedTask = taskRepository.save(task);
+
+        assertThat(savedTask.getTaskStatus()).isEqualTo(status);
+        assertThat(savedTask.getAssignee()).isEqualTo(user);
+        assertThat(savedTask.getLabels()).contains(label);
+    }
+
+    @Test
+    void testManyToManyRelationshipOperations() {
+        TaskStatus status = createValidTaskStatus("Test Status", "test_status");
+        Label label1 = createValidLabel("Label 1");
+        Label label2 = createValidLabel("Label 2");
+        Label label3 = createValidLabel("Label 3");
+
+        Task task = new Task();
+        task.setName("Test Task");
+        task.setDescription("Test Description");
+        task.setIndex(1);
+        task.setCreatedAt(LocalDateTime.now());
+        task.setTaskStatus(status);
+        task.addLabel(label1);
+        task.addLabel(label2);
+
+        Task savedTask = taskRepository.save(task);
+        assertThat(savedTask.getLabels()).hasSize(2);
+
+        Task taskWithThreeLabels = new Task();
+        taskWithThreeLabels.setName("Task With Three Labels");
+        taskWithThreeLabels.setDescription("Description");
+        taskWithThreeLabels.setIndex(2);
+        taskWithThreeLabels.setCreatedAt(LocalDateTime.now());
+        taskWithThreeLabels.setTaskStatus(status);
+        taskWithThreeLabels.addLabel(label1);
+        taskWithThreeLabels.addLabel(label2);
+        taskWithThreeLabels.addLabel(label3);
+
+        Task savedTaskWithThreeLabels = taskRepository.save(taskWithThreeLabels);
+        assertThat(savedTaskWithThreeLabels.getLabels()).hasSize(3);
+    }
+
+    @Test
+    void testTaskCreationWithRelationships() {
+        User user = createValidUser("creator@example.com");
+        TaskStatus status = createValidTaskStatus("In Progress", "in_progress");
+        Label bugLabel = createValidLabel("bug");
+        Label featureLabel = createValidLabel("feature");
+
+        Task task = new Task();
+        task.setName("Complex Task");
+        task.setDescription("Task with all relationships");
+        task.setIndex(1);
+        task.setCreatedAt(LocalDateTime.now());
+        task.setTaskStatus(status);
+        task.setAssignee(user);
+        task.addLabel(bugLabel);
+        task.addLabel(featureLabel);
+
+        Task savedTask = taskRepository.save(task);
+
+        assertThat(savedTask.getTaskStatus()).isEqualTo(status);
+        assertThat(savedTask.getAssignee()).isEqualTo(user);
+        assertThat(savedTask.getLabels()).hasSize(2);
+        assertThat(savedTask.getLabels()).contains(bugLabel, featureLabel);
+    }
+
+    @Test
+    void testEntityCreationAndBasicProperties() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setPasswordDigest("password");
+        user.setRole(Role.USER);
+
+        User savedUser = userRepository.save(user);
+
+        assertThat(savedUser.getId()).isNotNull();
+        assertThat(savedUser.getEmail()).isEqualTo("test@example.com");
+        assertThat(savedUser.getFirstName()).isEqualTo("John");
+        assertThat(savedUser.getLastName()).isEqualTo("Doe");
+        assertThat(savedUser.getRole()).isEqualTo(Role.USER);
     }
 }

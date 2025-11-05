@@ -1,12 +1,13 @@
 package hexlet.code.model;
 
+import hexlet.code.DatabaseCleanerExtension;
 import hexlet.code.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.datasource.url=jdbc:h2:mem:testdb",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-@Transactional
+@ExtendWith(DatabaseCleanerExtension.class)
 public class UserAdditionalTest {
 
     @Autowired
@@ -167,8 +168,8 @@ public class UserAdditionalTest {
     @Test
     void testUserValidation() {
         User user = new User();
-        user.setEmail("invalid-email"); // Invalid email format
-        user.setPasswordDigest(""); // Empty password
+        user.setEmail("invalid-email");
+        user.setPasswordDigest("");
 
         assertThat(user.getEmail()).isEqualTo("invalid-email");
         assertThat(user.getPasswordDigest()).isEmpty();

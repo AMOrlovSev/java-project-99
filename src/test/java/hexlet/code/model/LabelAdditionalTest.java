@@ -97,10 +97,8 @@ public class LabelAdditionalTest {
     @Test
     void testLabelValidation() {
         Label label = new Label();
-        label.setName("AB"); // Too short - should fail validation
+        label.setName("AB");
 
-        // This would normally be tested with @Valid in controller tests
-        // For model-level testing, we can verify the constraints
         assertThat(label.getName()).isEqualTo("AB");
     }
 }

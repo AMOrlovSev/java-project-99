@@ -1,19 +1,19 @@
 package hexlet.code.controller;
 
+import hexlet.code.DatabaseCleanerExtension;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.dto.taskStatus.TaskStatusCreateDTO;
 import hexlet.code.dto.taskStatus.TaskStatusUpdateDTO;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.repository.TaskStatusRepository;
-import hexlet.code.util.JWTUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ExtendWith(DatabaseCleanerExtension.class)
 public class TaskStatusControllerTest {
 
     @Autowired
@@ -36,17 +36,7 @@ public class TaskStatusControllerTest {
     private TaskStatusRepository taskStatusRepository;
 
     @Autowired
-    private JWTUtils jwtUtils;
-
-    @Autowired
     private ObjectMapper objectMapper;
-
-    private String authToken;
-
-    @BeforeEach
-    public void setUp() {
-        authToken = jwtUtils.generateToken("hexlet@example.com");
-    }
 
     @Test
     public void testGetTaskStatusesWithoutAuth() throws Exception {
@@ -66,23 +56,23 @@ public class TaskStatusControllerTest {
     }
 
     @Test
+    @WithMockUser
     public void testGetTaskStatusesWithAuth() throws Exception {
-        mockMvc.perform(get("/api/task_statuses")
-                        .header("Authorization", "Bearer " + authToken))
+        mockMvc.perform(get("/api/task_statuses"))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("X-Total-Count"))
                 .andExpect(jsonPath("$").isArray());
     }
 
     @Test
+    @WithMockUser
     public void testGetTaskStatusByIdWithAuth() throws Exception {
         TaskStatus status = new TaskStatus();
         status.setName("Test Status");
         status.setSlug("test_status");
         taskStatusRepository.save(status);
 
-        mockMvc.perform(get("/api/task_statuses/{id}", status.getId())
-                        .header("Authorization", "Bearer " + authToken))
+        mockMvc.perform(get("/api/task_statuses/{id}", status.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(status.getId()))
                 .andExpect(jsonPath("$.name").value("Test Status"))
@@ -90,20 +80,20 @@ public class TaskStatusControllerTest {
     }
 
     @Test
+    @WithMockUser
     public void testGetTaskStatusNotFound() throws Exception {
-        mockMvc.perform(get("/api/task_statuses/{id}", 999L)
-                        .header("Authorization", "Bearer " + authToken))
+        mockMvc.perform(get("/api/task_statuses/{id}", 999L))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser
     public void testCreateTaskStatus() throws Exception {
         TaskStatusCreateDTO createDTO = new TaskStatusCreateDTO();
         createDTO.setName("New Status");
         createDTO.setSlug("new_status");
 
         mockMvc.perform(post("/api/task_statuses")
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isCreated())
@@ -126,6 +116,7 @@ public class TaskStatusControllerTest {
     }
 
     @Test
+    @WithMockUser
     public void testUpdateTaskStatus() throws Exception {
         TaskStatus status = new TaskStatus();
         status.setName("Old Status");
@@ -136,7 +127,6 @@ public class TaskStatusControllerTest {
         updateDTO.setName(org.openapitools.jackson.nullable.JsonNullable.of("Updated Status"));
 
         mockMvc.perform(put("/api/task_statuses/{id}", status.getId())
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
@@ -161,14 +151,14 @@ public class TaskStatusControllerTest {
     }
 
     @Test
+    @WithMockUser
     public void testDeleteTaskStatus() throws Exception {
         TaskStatus status = new TaskStatus();
         status.setName("To Delete");
         status.setSlug("to_delete");
         taskStatusRepository.save(status);
 
-        mockMvc.perform(delete("/api/task_statuses/{id}", status.getId())
-                        .header("Authorization", "Bearer " + authToken))
+        mockMvc.perform(delete("/api/task_statuses/{id}", status.getId()))
                 .andExpect(status().isNoContent());
 
         assertThat(taskStatusRepository.findById(status.getId())).isEmpty();
@@ -186,6 +176,7 @@ public class TaskStatusControllerTest {
     }
 
     @Test
+    @WithMockUser
     public void testCreateTaskStatusWithDuplicateName() throws Exception {
         TaskStatus existingStatus = new TaskStatus();
         existingStatus.setName("Existing Status");
@@ -197,13 +188,13 @@ public class TaskStatusControllerTest {
         createDTO.setSlug("different_slug");
 
         mockMvc.perform(post("/api/task_statuses")
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isConflict());
     }
 
     @Test
+    @WithMockUser
     public void testCreateTaskStatusWithDuplicateSlug() throws Exception {
         TaskStatus existingStatus = new TaskStatus();
         existingStatus.setName("Existing Name");
@@ -215,7 +206,6 @@ public class TaskStatusControllerTest {
         createDTO.setSlug("existing_slug");
 
         mockMvc.perform(post("/api/task_statuses")
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isConflict());

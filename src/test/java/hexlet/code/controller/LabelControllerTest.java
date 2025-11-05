@@ -1,12 +1,12 @@
 package hexlet.code.controller;
 
+import hexlet.code.DatabaseCleanerExtension;
 import hexlet.code.dto.label.LabelCreateDTO;
 import hexlet.code.dto.label.LabelUpdateDTO;
 import hexlet.code.model.Label;
 import hexlet.code.repository.LabelRepository;
-import hexlet.code.util.JWTUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,7 +15,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -23,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ExtendWith(DatabaseCleanerExtension.class)
 public class LabelControllerTest {
 
     @Autowired
@@ -33,23 +32,12 @@ public class LabelControllerTest {
     private LabelRepository labelRepository;
 
     @Autowired
-    private JWTUtils jwtUtils;
-
-    @Autowired
     private ObjectMapper objectMapper;
-
-    private String token;
-
-    @BeforeEach
-    public void setUp() {
-        token = jwtUtils.generateToken("hexlet@example.com");
-    }
 
     @Test
     @WithMockUser
     public void testGetLabels() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/labels")
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/labels"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$").isArray());
     }
@@ -61,7 +49,6 @@ public class LabelControllerTest {
         labelData.setName("Test Label");
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/labels")
-                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(labelData)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
@@ -81,7 +68,6 @@ public class LabelControllerTest {
         updateData.setName(org.openapitools.jackson.nullable.JsonNullable.of("New Name"));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/labels/" + label.getId())
-                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateData)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -98,8 +84,7 @@ public class LabelControllerTest {
         label.setName("To Delete");
         label = labelRepository.save(label);
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/labels/" + label.getId())
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/labels/" + label.getId()))
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
 
         assertThat(labelRepository.existsById(label.getId())).isFalse();

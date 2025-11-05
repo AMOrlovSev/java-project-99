@@ -1,5 +1,6 @@
 package hexlet.code.controller;
 
+import hexlet.code.DatabaseCleanerExtension;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.dto.task.TaskCreateDTO;
 import hexlet.code.dto.task.TaskUpdateDTO;
@@ -9,9 +10,9 @@ import hexlet.code.model.User;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
-import hexlet.code.util.JWTUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,7 +20,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@ExtendWith(DatabaseCleanerExtension.class)
 public class TaskControllerTest {
 
     @Autowired
@@ -52,20 +52,12 @@ public class TaskControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private JWTUtils jwtUtils;
-
     private User testUser;
     private TaskStatus testStatus;
     private Task testTask;
-    private String authToken;
 
     @BeforeEach
     void setUp() {
-        taskRepository.deleteAll();
-        userRepository.deleteAll();
-        taskStatusRepository.deleteAll();
-
         testUser = new User();
         testUser.setEmail("test@example.com");
         testUser.setPasswordDigest("password");
@@ -89,15 +81,12 @@ public class TaskControllerTest {
         testTask.setAssignee(testUser);
         testTask.setCreatedAt(LocalDateTime.now());
         testTask = taskRepository.save(testTask);
-
-        authToken = jwtUtils.generateToken(testUser.getEmail());
     }
 
     @Test
     @WithMockUser
     void testGetAllTasks() throws Exception {
         mockMvc.perform(get("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Total-Count", "1"))
@@ -113,7 +102,6 @@ public class TaskControllerTest {
     @WithMockUser
     void testGetTaskById() throws Exception {
         mockMvc.perform(get("/api/tasks/{id}", testTask.getId())
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testTask.getId()))
@@ -128,7 +116,6 @@ public class TaskControllerTest {
     @WithMockUser
     void testGetTaskByIdNotFound() throws Exception {
         mockMvc.perform(get("/api/tasks/{id}", 999L)
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
@@ -144,7 +131,6 @@ public class TaskControllerTest {
         createDTO.setAssigneeId(testUser.getId());
 
         mockMvc.perform(post("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isCreated())
@@ -167,7 +153,6 @@ public class TaskControllerTest {
         createDTO.setStatus("test_status");
 
         mockMvc.perform(post("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isCreated())
@@ -184,10 +169,9 @@ public class TaskControllerTest {
         TaskCreateDTO createDTO = new TaskCreateDTO();
         createDTO.setTitle("New Task");
         createDTO.setContent("New Description");
-        createDTO.setStatus("invalid_status"); // Несуществующий статус
+        createDTO.setStatus("invalid_status");
 
         mockMvc.perform(post("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isNotFound());
@@ -203,7 +187,6 @@ public class TaskControllerTest {
         createDTO.setAssigneeId(999L);
 
         mockMvc.perform(post("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isNotFound());
@@ -213,12 +196,10 @@ public class TaskControllerTest {
     @WithMockUser
     void testCreateTaskValidation() throws Exception {
         TaskCreateDTO createDTO = new TaskCreateDTO();
-
         createDTO.setContent("Description");
         createDTO.setStatus("test_status");
 
         mockMvc.perform(post("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isBadRequest());
@@ -233,7 +214,6 @@ public class TaskControllerTest {
         updateDTO.setIndex(JsonNullable.of(10));
 
         mockMvc.perform(put("/api/tasks/{id}", testTask.getId())
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
@@ -257,7 +237,6 @@ public class TaskControllerTest {
         updateDTO.setStatus(JsonNullable.of("new_status"));
 
         mockMvc.perform(put("/api/tasks/{id}", testTask.getId())
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
@@ -280,7 +259,6 @@ public class TaskControllerTest {
         updateDTO.setAssigneeId(JsonNullable.of(newUser.getId()));
 
         mockMvc.perform(put("/api/tasks/{id}", testTask.getId())
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
@@ -294,7 +272,6 @@ public class TaskControllerTest {
         updateDTO.setAssigneeId(JsonNullable.of(null));
 
         mockMvc.perform(put("/api/tasks/{id}", testTask.getId())
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
@@ -311,7 +288,6 @@ public class TaskControllerTest {
         updateDTO.setTitle(JsonNullable.of("Updated Task"));
 
         mockMvc.perform(put("/api/tasks/{id}", 999L)
-                        .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isNotFound());
@@ -320,8 +296,7 @@ public class TaskControllerTest {
     @Test
     @WithMockUser
     void testDeleteTask() throws Exception {
-        mockMvc.perform(delete("/api/tasks/{id}", testTask.getId())
-                        .header("Authorization", "Bearer " + authToken))
+        mockMvc.perform(delete("/api/tasks/{id}", testTask.getId()))
                 .andExpect(status().isNoContent());
 
         assertThat(taskRepository.count()).isEqualTo(0);
@@ -331,8 +306,7 @@ public class TaskControllerTest {
     @Test
     @WithMockUser
     void testDeleteTaskNotFound() throws Exception {
-        mockMvc.perform(delete("/api/tasks/{id}", 999L)
-                        .header("Authorization", "Bearer " + authToken))
+        mockMvc.perform(delete("/api/tasks/{id}", 999L))
                 .andExpect(status().isNotFound());
     }
 
@@ -392,7 +366,6 @@ public class TaskControllerTest {
         taskRepository.save(filteredTask);
 
         mockMvc.perform(get("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .param("titleCont", "Filtered")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -400,7 +373,6 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Filtered Task"));
 
         mockMvc.perform(get("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .param("status", "review")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -408,7 +380,6 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$[0].status").value("review"));
 
         mockMvc.perform(get("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .param("titleCont", "Filtered")
                         .param("status", "review")
                         .param("assigneeId", testUser.getId().toString())
@@ -435,7 +406,6 @@ public class TaskControllerTest {
         }
 
         mockMvc.perform(get("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .param("page", "1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -443,7 +413,6 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.length()").value(10));
 
         mockMvc.perform(get("/api/tasks")
-                        .header("Authorization", "Bearer " + authToken)
                         .param("page", "2")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

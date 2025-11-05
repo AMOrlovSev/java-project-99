@@ -1,14 +1,15 @@
 package hexlet.code.model;
 
+import hexlet.code.DatabaseCleanerExtension;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.datasource.url=jdbc:h2:mem:testdb",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-@Transactional
+@ExtendWith(DatabaseCleanerExtension.class)
 public class TaskAdditionalTest {
 
     @Autowired
@@ -36,11 +37,7 @@ public class TaskAdditionalTest {
 
     @BeforeEach
     void setUp() {
-        taskRepository.deleteAll();
-        userRepository.deleteAll();
-        taskStatusRepository.deleteAll();
 
-        // Создаем обязательный TaskStatus
         testStatus = new TaskStatus();
         testStatus.setName("Test Status");
         testStatus.setSlug("test_status");
