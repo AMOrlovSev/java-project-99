@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @ExtendWith(DatabaseCleanerExtension.class)
-public class LabelServiceAdditionalTest {
+public class LabelServiceTest {
 
     @Autowired
     private LabelService labelService;
