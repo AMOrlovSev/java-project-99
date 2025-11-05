@@ -7,7 +7,6 @@ import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.TaskStatusMapper;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.repository.TaskStatusRepository;
-import hexlet.code.service.TaskService;
 import hexlet.code.service.TaskStatusService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
