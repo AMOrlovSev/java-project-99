@@ -51,9 +51,7 @@ public class TaskStatusControllerTest {
     @Test
     public void testGetTaskStatusesWithoutAuth() throws Exception {
         mockMvc.perform(get("/api/task_statuses"))
-                .andExpect(status().isOk())
-                .andExpect(header().exists("X-Total-Count"))
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -64,10 +62,7 @@ public class TaskStatusControllerTest {
         taskStatusRepository.save(status);
 
         mockMvc.perform(get("/api/task_statuses/{id}", status.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(status.getId()))
-                .andExpect(jsonPath("$.name").value("Test Status"))
-                .andExpect(jsonPath("$.slug").value("test_status"));
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

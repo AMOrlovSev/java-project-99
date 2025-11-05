@@ -73,6 +73,9 @@ public class SecurityConfig {
                         // Аутентификация
                         .requestMatchers("/api/login").permitAll()
 
+                        // Регистрация (только POST запросы для создания пользователей)
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer((rs) -> rs

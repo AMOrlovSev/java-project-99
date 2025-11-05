@@ -45,5 +45,6 @@ bin/
 /node_modules/
 
 
-/src/main/java/hexlet/combine_java.bat
-/src/main/java/hexlet/combined_java_files.txt
+### Custom files to ignore ###
+combine_java.bat
+combined_java_files.txt
