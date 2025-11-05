@@ -23,7 +23,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final TaskService taskService;
 
     @Override
     public List<User> getAll() {
@@ -70,10 +69,6 @@ public class UserServiceImpl implements UserService {
     public void delete(Long id) {
         User userToDelete = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
-
-        if (taskService.hasTasksWithUser(id)) {
-            throw new ResourceAlreadyExistsException("Cannot delete user with associated tasks");
-        }
 
         userRepository.deleteById(id);
     }

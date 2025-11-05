@@ -21,7 +21,6 @@ public class TaskStatusServiceImpl implements TaskStatusService {
 
     private final TaskStatusRepository taskStatusRepository;
     private final TaskStatusMapper taskStatusMapper;
-    private final TaskService taskService;
 
     @Override
     public List<TaskStatus> getAll() {
@@ -75,10 +74,6 @@ public class TaskStatusServiceImpl implements TaskStatusService {
     public void delete(Long id) {
         TaskStatus taskStatusToDelete = taskStatusRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task status not found: " + id));
-
-        if (taskService.hasTasksWithStatus(id)) {
-            throw new ResourceAlreadyExistsException("Cannot delete task status with associated tasks");
-        }
 
         taskStatusRepository.deleteById(id);
     }

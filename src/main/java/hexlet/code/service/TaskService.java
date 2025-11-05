@@ -17,6 +17,4 @@ public interface TaskService {
     Task create(TaskCreateDTO taskData);
     Task update(Long id, TaskUpdateDTO taskData);
     void delete(Long id);
-    boolean hasTasksWithUser(Long userId);
-    boolean hasTasksWithStatus(Long statusId);
 }

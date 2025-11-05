@@ -62,10 +62,6 @@ public class LabelServiceImpl implements LabelService {
         Label labelToDelete = labelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Label not found: " + id));
 
-        if (labelRepository.existsByIdAndTasksIsNotEmpty(id)) {
-            throw new ResourceAlreadyExistsException("Cannot delete label with associated tasks");
-        }
-
         labelRepository.deleteById(id);
     }
 }

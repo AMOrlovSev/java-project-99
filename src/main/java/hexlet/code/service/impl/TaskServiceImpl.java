@@ -142,14 +142,4 @@ public class TaskServiceImpl implements TaskService {
 
         taskRepository.deleteById(id);
     }
-
-    @Override
-    public boolean hasTasksWithUser(Long userId) {
-        return taskRepository.existsTasksByUser(userId);
-    }
-
-    @Override
-    public boolean hasTasksWithStatus(Long statusId) {
-        return taskRepository.existsTasksByStatus(statusId);
-    }
 }

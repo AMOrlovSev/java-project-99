@@ -3,6 +3,7 @@ package hexlet.code.handler;
 import hexlet.code.exception.ResourceAlreadyExistsException;
 import hexlet.code.exception.ResourceNotFoundException;
 import io.sentry.Sentry;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -38,6 +39,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleAlreadyExists(ResourceAlreadyExistsException ex) {
         Sentry.captureMessage("Resource already exists: " + ex.getMessage(), io.sentry.SentryLevel.WARNING);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        Sentry.captureException(ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body("Cannot perform operation due to data integrity constraints");
     }
 
     @ExceptionHandler(AccessDeniedException.class)

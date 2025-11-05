@@ -144,18 +144,4 @@ public class TaskServiceAdditionalTest {
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Task not found");
     }
-
-    @Test
-    void testHasTasksWithUser() {
-        User user = createValidUser("test@example.com");
-        boolean result = taskService.hasTasksWithUser(user.getId());
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    void testHasTasksWithStatus() {
-        TaskStatus status = createValidTaskStatus("Test Status", "test_status");
-        boolean result = taskService.hasTasksWithStatus(status.getId());
-        assertThat(result).isFalse();
-    }
 }
