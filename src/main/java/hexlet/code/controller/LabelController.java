@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,13 +33,11 @@ import java.util.List;
 @RequestMapping("/api")
 @Tag(name = "Метки", description = "API для управления метками задач")
 @SecurityRequirement(name = "bearerAuth")
+@AllArgsConstructor
 public class LabelController {
 
-    @Autowired
-    private LabelService labelService;
-
-    @Autowired
-    private LabelMapper labelMapper;
+    private final LabelService labelService;
+    private final LabelMapper labelMapper;
 
     @GetMapping("/labels")
     @PreAuthorize("isAuthenticated()")

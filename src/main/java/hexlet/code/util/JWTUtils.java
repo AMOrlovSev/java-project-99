@@ -5,20 +5,18 @@ import java.time.temporal.ChronoUnit;
 
 import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class JWTUtils {
 
-    @Autowired
-    private JwtEncoder encoder;
-
-    @Autowired
-    private UserRepository userRepository;
+    private final JwtEncoder encoder;
+    private final UserRepository userRepository;
 
     public String generateToken(String username) {
         Instant now = Instant.now();

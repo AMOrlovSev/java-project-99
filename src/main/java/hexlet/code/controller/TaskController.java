@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -40,16 +40,12 @@ import java.util.List;
 @RequestMapping("/api")
 @Tag(name = "Задачи", description = "API для управления задачами")
 @SecurityRequirement(name = "bearerAuth")
+@AllArgsConstructor
 public class TaskController {
 
-    @Autowired
-    private TaskService taskService;
-
-    @Autowired
-    private TaskMapper taskMapper;
-
-    @Autowired
-    private TaskSpecification taskSpecification;
+    private final TaskService taskService;
+    private final TaskMapper taskMapper;
+    private final TaskSpecification taskSpecification;
 
     @GetMapping("/tasks")
     @PreAuthorize("isAuthenticated()")
