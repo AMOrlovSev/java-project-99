@@ -9,7 +9,6 @@ import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.service.UserService;
 import lombok.AllArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +20,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<User> getAll() {
@@ -39,7 +37,6 @@ public class UserServiceImpl implements UserService {
             throw new ResourceAlreadyExistsException("User with email " + userData.getEmail() + " already exists");
         }
         User user = userMapper.map(userData);
-        user.setPasswordDigest(passwordEncoder.encode(userData.getPassword()));
         return userRepository.save(user);
     }
 
@@ -56,11 +53,6 @@ public class UserServiceImpl implements UserService {
         }
 
         userMapper.update(userData, userToUpdate);
-
-        if (userData.getPassword() != null && userData.getPassword().isPresent()) {
-            userToUpdate.setPasswordDigest(passwordEncoder.encode(userData.getPassword().get()));
-        }
-
         return userRepository.save(userToUpdate);
     }
 
@@ -69,6 +61,10 @@ public class UserServiceImpl implements UserService {
         User userToDelete = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
 
-        userRepository.deleteById(id);
+        if (!userToDelete.getAssignedTasks().isEmpty()) {
+            throw new ResourceAlreadyExistsException("Cannot delete user with assigned tasks");
+        }
+
+        userRepository.delete(userToDelete);
     }
 }

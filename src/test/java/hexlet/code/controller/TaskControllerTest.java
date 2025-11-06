@@ -12,6 +12,7 @@ import hexlet.code.model.User;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
+import hexlet.code.service.TaskService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,9 @@ public class TaskControllerTest {
     private TaskStatusRepository taskStatusRepository;
 
     @Autowired
+    private TaskService taskService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private User testUser;
@@ -77,14 +81,14 @@ public class TaskControllerTest {
         testStatus.setCreatedAt(LocalDateTime.now());
         testStatus = taskStatusRepository.save(testStatus);
 
-        testTask = new Task();
-        testTask.setName("Test Task");
-        testTask.setDescription("Test Description");
-        testTask.setIndex(1);
-        testTask.setTaskStatus(testStatus);
-        testTask.setAssignee(testUser);
-        testTask.setCreatedAt(LocalDateTime.now());
-        testTask = taskRepository.save(testTask);
+        TaskCreateDTO createDTO = new TaskCreateDTO();
+        createDTO.setTitle("Test Task");
+        createDTO.setContent("Test Description");
+        createDTO.setIndex(1);
+        createDTO.setStatus("test_status");
+        createDTO.setAssigneeId(testUser.getId());
+
+        testTask = taskService.create(createDTO);
     }
 
     @Test
@@ -98,9 +102,7 @@ public class TaskControllerTest {
                 .getResponse();
         var body = response.getContentAsString();
 
-        List<TaskDTO> actual = objectMapper.readValue(body, new TypeReference<>() {
-
-        });
+        List<TaskDTO> actual = objectMapper.readValue(body, new TypeReference<>() { });
         List<Task> expectedTasks = taskRepository.findAll();
 
         Set<Long> actualIds = actual.stream().map(TaskDTO::getId).collect(Collectors.toSet());
@@ -199,5 +201,58 @@ public class TaskControllerTest {
                 .andExpect(status().isNoContent());
 
         Assertions.assertThat(taskRepository.existsById(testTask.getId())).isFalse();
+    }
+
+    @Test
+    @WithMockUser
+    void testCreateTaskWithInvalidStatus() throws Exception {
+        TaskCreateDTO createDTO = new TaskCreateDTO();
+        createDTO.setTitle("Invalid Task");
+        createDTO.setContent("Description");
+        createDTO.setStatus("invalid_status");
+
+        mockMvc.perform(post("/api/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createDTO)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void testUpdateTaskWithInvalidStatus() throws Exception {
+        TaskUpdateDTO updateDTO = new TaskUpdateDTO();
+        updateDTO.setStatus(JsonNullable.of("invalid_status"));
+
+        mockMvc.perform(put("/api/tasks/{id}", testTask.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void testGetNonExistentTask() throws Exception {
+        mockMvc.perform(get("/api/tasks/9999")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void testUpdateNonExistentTask() throws Exception {
+        TaskUpdateDTO updateDTO = new TaskUpdateDTO();
+        updateDTO.setTitle(JsonNullable.of("Updated"));
+
+        mockMvc.perform(put("/api/tasks/9999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void testDeleteNonExistentTask() throws Exception {
+        mockMvc.perform(delete("/api/tasks/9999"))
+                .andExpect(status().isNotFound());
     }
 }

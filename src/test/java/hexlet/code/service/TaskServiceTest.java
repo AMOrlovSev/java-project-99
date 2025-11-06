@@ -91,25 +91,6 @@ public class TaskServiceTest {
         return labelRepository.save(label);
     }
 
-    private User createValidUser(String email) {
-        User user = new User();
-        user.setEmail(email);
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setPasswordDigest("valid-password");
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-        return userRepository.save(user);
-    }
-
-    private TaskStatus createValidTaskStatus(String name, String slug) {
-        TaskStatus status = new TaskStatus();
-        status.setName(name);
-        status.setSlug(slug);
-        status.setCreatedAt(LocalDateTime.now());
-        return taskStatusRepository.save(status);
-    }
-
     @Test
     void testFindByIdNotFound() {
         Optional<Task> result = taskService.findById(9999L);
@@ -118,16 +99,10 @@ public class TaskServiceTest {
 
     @Test
     void testGetAllWithSpecification() {
-        TaskStatus status = createValidTaskStatus("Test Status", "test_status");
-        User user = createValidUser("test@example.com");
-        Task task = new Task();
-        task.setName("Test Task");
-        task.setDescription("Test Description");
-        task.setIndex(1);
-        task.setCreatedAt(LocalDateTime.now());
-        task.setTaskStatus(status);
-        task.setAssignee(user);
-        taskRepository.save(task);
+        TaskCreateDTO taskData = new TaskCreateDTO();
+        taskData.setTitle("Test Task");
+        taskData.setStatus(testStatus.getSlug());
+        taskService.create(taskData);
 
         Specification<Task> spec = Specification.where(null);
         Page<Task> result = taskService.getAll(spec, PageRequest.of(0, 10));
@@ -138,18 +113,29 @@ public class TaskServiceTest {
 
     @Test
     void testGetAllWithoutPagination() {
-        TaskStatus status = createValidTaskStatus("Test Status", "test_status");
-        Task task = new Task();
-        task.setName("Test Task");
-        task.setDescription("Test Description");
-        task.setIndex(1);
-        task.setCreatedAt(LocalDateTime.now());
-        task.setTaskStatus(status);
-        taskRepository.save(task);
+        TaskCreateDTO taskData = new TaskCreateDTO();
+        taskData.setTitle("Test Task");
+        taskData.setStatus(testStatus.getSlug());
+        taskService.create(taskData);
 
         var result = taskService.getAll();
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Test Task");
+    }
+
+    @Test
+    void testCreateTaskWithRelationships() {
+        TaskCreateDTO createDTO = new TaskCreateDTO();
+        createDTO.setTitle("Test Task");
+        createDTO.setStatus(testStatus.getSlug());
+        createDTO.setAssigneeId(testUser.getId());
+        createDTO.setTaskLabelIds(Set.of(testLabel.getId()));
+
+        var createdTask = taskService.create(createDTO);
+
+        assertThat(createdTask.getTaskStatus()).isEqualTo(testStatus);
+        assertThat(createdTask.getAssignee()).isEqualTo(testUser);
+        assertThat(createdTask.getLabels()).contains(testLabel);
     }
 
     @Test
@@ -161,22 +147,6 @@ public class TaskServiceTest {
         assertThatThrownBy(() -> taskService.create(taskData))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Task status not found");
-    }
-
-    @Test
-    void testUpdateTaskNotFound() {
-        TaskUpdateDTO updateData = new TaskUpdateDTO();
-
-        assertThatThrownBy(() -> taskService.update(9999L, updateData))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Task not found");
-    }
-
-    @Test
-    void testDeleteTaskNotFound() {
-        assertThatThrownBy(() -> taskService.delete(9999L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Task not found");
     }
 
     @Test
@@ -223,6 +193,22 @@ public class TaskServiceTest {
         assertThatThrownBy(() -> taskService.create(taskData))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Label not found");
+    }
+
+    @Test
+    void testUpdateTaskNotFound() {
+        TaskUpdateDTO updateData = new TaskUpdateDTO();
+
+        assertThatThrownBy(() -> taskService.update(9999L, updateData))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Task not found");
+    }
+
+    @Test
+    void testDeleteTaskNotFound() {
+        assertThatThrownBy(() -> taskService.delete(9999L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Task not found");
     }
 
     @Test
@@ -276,6 +262,24 @@ public class TaskServiceTest {
 
         assertThat(updatedTask.getLabels()).hasSize(1);
         assertThat(updatedTask.getLabels()).contains(newLabel);
+    }
+
+    @Test
+    void testUpdateTaskStatus() {
+        TaskStatus newStatus = createTaskStatus("New Status", "new_status");
+
+        TaskCreateDTO createDTO = new TaskCreateDTO();
+        createDTO.setTitle("Test Task");
+        createDTO.setStatus(testStatus.getSlug());
+
+        var createdTask = taskService.create(createDTO);
+
+        TaskUpdateDTO updateDTO = new TaskUpdateDTO();
+        updateDTO.setStatus(JsonNullable.of(newStatus.getSlug()));
+
+        var updatedTask = taskService.update(createdTask.getId(), updateDTO);
+
+        assertThat(updatedTask.getTaskStatus()).isEqualTo(newStatus);
     }
 
     @Test
@@ -353,5 +357,23 @@ public class TaskServiceTest {
 
         assertThat(foundTask).isPresent();
         assertThat(foundTask.get().getName()).isEqualTo("Findable Task");
+    }
+
+    @Test
+    void testUpdateTaskWithNewRelationships() {
+        TaskCreateDTO createDTO = new TaskCreateDTO();
+        createDTO.setTitle("Original Task");
+        createDTO.setStatus(testStatus.getSlug());
+
+        var createdTask = taskService.create(createDTO);
+
+        TaskUpdateDTO updateDTO = new TaskUpdateDTO();
+        updateDTO.setAssigneeId(JsonNullable.of(testUser.getId()));
+        updateDTO.setTaskLabelIds(JsonNullable.of(Set.of(testLabel.getId())));
+
+        var updatedTask = taskService.update(createdTask.getId(), updateDTO);
+
+        assertThat(updatedTask.getAssignee()).isEqualTo(testUser);
+        assertThat(updatedTask.getLabels()).contains(testLabel);
     }
 }

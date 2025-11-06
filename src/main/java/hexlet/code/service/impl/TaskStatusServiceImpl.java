@@ -74,6 +74,10 @@ public class TaskStatusServiceImpl implements TaskStatusService {
         TaskStatus taskStatusToDelete = taskStatusRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task status not found: " + id));
 
-        taskStatusRepository.deleteById(id);
+        if (!taskStatusToDelete.getTasks().isEmpty()) {
+            throw new ResourceAlreadyExistsException("Cannot delete task status with associated tasks");
+        }
+
+        taskStatusRepository.delete(taskStatusToDelete);
     }
 }
