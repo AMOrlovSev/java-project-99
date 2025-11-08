@@ -3,7 +3,6 @@ package hexlet.code.service;
 import hexlet.code.DatabaseCleanerExtension;
 import hexlet.code.dto.taskStatus.TaskStatusCreateDTO;
 import hexlet.code.dto.taskStatus.TaskStatusUpdateDTO;
-import hexlet.code.exception.ResourceAlreadyExistsException;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.repository.TaskStatusRepository;
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.Optional;
@@ -50,8 +50,7 @@ public class TaskStatusServiceTest {
         dto2.setSlug("slug2");
 
         assertThatThrownBy(() -> taskStatusService.create(dto2))
-                .isInstanceOf(ResourceAlreadyExistsException.class)
-                .hasMessageContaining("already exists");
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -66,8 +65,7 @@ public class TaskStatusServiceTest {
         dto2.setSlug("duplicate_slug");
 
         assertThatThrownBy(() -> taskStatusService.create(dto2))
-                .isInstanceOf(ResourceAlreadyExistsException.class)
-                .hasMessageContaining("already exists");
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test

@@ -1,7 +1,6 @@
 package hexlet.code.handler;
 
 import hexlet.code.DatabaseCleanerExtension;
-import hexlet.code.exception.ResourceAlreadyExistsException;
 import hexlet.code.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,18 +44,45 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void testHandleResourceAlreadyExistsException() {
-        ResourceAlreadyExistsException ex = new ResourceAlreadyExistsException("Resource already exists");
+    void testHandleDataIntegrityViolationExceptionWithUniqueConstraint() {
+        DataIntegrityViolationException ex = mock(DataIntegrityViolationException.class);
+        Exception rootCause = new Exception("unique constraint \"label_name_key\"");
 
-        ResponseEntity<String> response = exceptionHandler.handleAlreadyExists(ex);
+        when(ex.getRootCause()).thenReturn(rootCause);
+
+        ResponseEntity<String> response = exceptionHandler.handleDataIntegrityViolation(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-        assertThat(response.getBody()).isEqualTo("Resource already exists");
+        assertThat(response.getBody()).isEqualTo("Label with this name already exists");
     }
 
     @Test
-    void testHandleDataIntegrityViolationException() {
+    void testHandleDataIntegrityViolationExceptionWithForeignKeyConstraint() {
+        DataIntegrityViolationException ex = mock(DataIntegrityViolationException.class);
+        Exception rootCause = new Exception("foreign key constraint \"task_status_id_fk\"");
+
+        when(ex.getRootCause()).thenReturn(rootCause);
+
+        ResponseEntity<String> response = exceptionHandler.handleDataIntegrityViolation(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isEqualTo("Cannot delete task status because "
+                + "there are tasks associated with it");
+    }
+
+    @Test
+    void testHandleDataIntegrityViolationExceptionWithGenericMessage() {
         DataIntegrityViolationException ex = new DataIntegrityViolationException("Data integrity violation");
+
+        ResponseEntity<String> response = exceptionHandler.handleDataIntegrityViolation(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isEqualTo("Cannot perform operation due to data integrity constraints");
+    }
+
+    @Test
+    void testHandleDataIntegrityViolationExceptionWithNullRootCause() {
+        DataIntegrityViolationException ex = new DataIntegrityViolationException("Test violation");
 
         ResponseEntity<String> response = exceptionHandler.handleDataIntegrityViolation(ex);
 
@@ -96,7 +122,6 @@ public class GlobalExceptionHandlerTest {
 
     @Test
     void testHandleMethodArgumentNotValidException() {
-        // Создаем более реалистичный mock с BindingResult
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
         FieldError fieldError = new FieldError("objectName", "fieldName", "defaultMessage");
@@ -112,7 +137,6 @@ public class GlobalExceptionHandlerTest {
 
     @Test
     void testHandleMethodArgumentNotValidExceptionWithEmptyErrors() {
-        // Тест с пустым списком ошибок
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
 
@@ -127,7 +151,6 @@ public class GlobalExceptionHandlerTest {
 
     @Test
     void testHandleMethodArgumentNotValidExceptionWithMultipleErrors() {
-        // Тест с несколькими ошибками валидации
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
 
@@ -147,5 +170,57 @@ public class GlobalExceptionHandlerTest {
         java.util.Map<String, String> errors = (java.util.Map<String, String>) response.getBody();
         assertThat(errors).hasSize(3);
         assertThat(errors).containsKeys("email", "password", "firstName");
+    }
+
+    @Test
+    void testHandleDataIntegrityViolationExceptionWithUserEmailConstraint() {
+        DataIntegrityViolationException ex = mock(DataIntegrityViolationException.class);
+        Exception rootCause = new Exception("unique constraint \"user_email_key\"");
+
+        when(ex.getRootCause()).thenReturn(rootCause);
+
+        ResponseEntity<String> response = exceptionHandler.handleDataIntegrityViolation(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isEqualTo("User with this email already exists");
+    }
+
+    @Test
+    void testHandleDataIntegrityViolationExceptionWithTaskStatusSlugConstraint() {
+        DataIntegrityViolationException ex = mock(DataIntegrityViolationException.class);
+        Exception rootCause = new Exception("unique constraint \"task_status_slug_key\"");
+
+        when(ex.getRootCause()).thenReturn(rootCause);
+
+        ResponseEntity<String> response = exceptionHandler.handleDataIntegrityViolation(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isEqualTo("Task status with this slug already exists");
+    }
+
+    @Test
+    void testHandleDataIntegrityViolationExceptionWithAssigneeConstraint() {
+        DataIntegrityViolationException ex = mock(DataIntegrityViolationException.class);
+        Exception rootCause = new Exception("foreign key constraint \"assignee_id_fk\"");
+
+        when(ex.getRootCause()).thenReturn(rootCause);
+
+        ResponseEntity<String> response = exceptionHandler.handleDataIntegrityViolation(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isEqualTo("Cannot delete user because there are tasks assigned to this user");
+    }
+
+    @Test
+    void testHandleDataIntegrityViolationExceptionWithLabelConstraint() {
+        DataIntegrityViolationException ex = mock(DataIntegrityViolationException.class);
+        Exception rootCause = new Exception("foreign key constraint \"task_labels_label_id_fk\"");
+
+        when(ex.getRootCause()).thenReturn(rootCause);
+
+        ResponseEntity<String> response = exceptionHandler.handleDataIntegrityViolation(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isEqualTo("Cannot delete label because there are tasks using this label");
     }
 }

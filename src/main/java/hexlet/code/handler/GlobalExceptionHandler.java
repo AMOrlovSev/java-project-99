@@ -1,6 +1,5 @@
 package hexlet.code.handler;
 
-import hexlet.code.exception.ResourceAlreadyExistsException;
 import hexlet.code.exception.ResourceNotFoundException;
 import io.sentry.Sentry;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -35,17 +34,49 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
-    @ExceptionHandler(ResourceAlreadyExistsException.class)
-    public ResponseEntity<String> handleAlreadyExists(ResourceAlreadyExistsException ex) {
-        Sentry.captureMessage("Resource already exists: " + ex.getMessage(), io.sentry.SentryLevel.WARNING);
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
-    }
-
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<String> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         Sentry.captureException(ex);
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body("Cannot perform operation due to data integrity constraints");
+
+        String rootMessage = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
+
+        String userMessage;
+        if (rootMessage != null) {
+            if (rootMessage.contains("unique constraint") || rootMessage.contains("Unique index")
+                    || rootMessage.contains("Duplicate entry")) {
+                if (rootMessage.contains("label_name") || rootMessage.contains("name")
+                        && rootMessage.contains("label")) {
+                    userMessage = "Label with this name already exists";
+                } else if (rootMessage.contains("task_status_name") || rootMessage.contains("name")
+                        && rootMessage.contains("task_status")) {
+                    userMessage = "Task status with this name already exists";
+                } else if (rootMessage.contains("task_status_slug") || rootMessage.contains("slug")
+                        && rootMessage.contains("task_status")) {
+                    userMessage = "Task status with this slug already exists";
+                } else if (rootMessage.contains("user_email") || rootMessage.contains("email")
+                        && rootMessage.contains("user")) {
+                    userMessage = "User with this email already exists";
+                } else {
+                    userMessage = "Resource with this value already exists";
+                }
+            } else if (rootMessage.contains("foreign key constraint")) {
+                if (rootMessage.contains("task_status")) {
+                    userMessage = "Cannot delete task status because there are tasks associated with it";
+                } else if (rootMessage.contains("assignee")) {
+                    userMessage = "Cannot delete user because there are tasks assigned to this user";
+                } else if (rootMessage.contains("label")) {
+                    userMessage = "Cannot delete label because there are tasks using this label";
+                } else {
+                    userMessage = "Cannot perform operation due to existing relationships";
+                }
+            } else {
+                userMessage = "Cannot perform operation due to data integrity constraints";
+            }
+        } else {
+            userMessage = "Cannot perform operation due to data integrity constraints";
+        }
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(userMessage);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

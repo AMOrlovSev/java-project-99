@@ -3,7 +3,6 @@ package hexlet.code.service;
 import hexlet.code.DatabaseCleanerExtension;
 import hexlet.code.dto.label.LabelCreateDTO;
 import hexlet.code.dto.label.LabelUpdateDTO;
-import hexlet.code.exception.ResourceAlreadyExistsException;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.model.Label;
 import hexlet.code.repository.LabelRepository;
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.Optional;
@@ -48,8 +48,7 @@ public class LabelServiceTest {
         dto2.setName("Duplicate Label");
 
         assertThatThrownBy(() -> labelService.create(dto2))
-                .isInstanceOf(ResourceAlreadyExistsException.class)
-                .hasMessageContaining("already exists");
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -82,7 +81,6 @@ public class LabelServiceTest {
         updateDTO.setName(org.openapitools.jackson.nullable.JsonNullable.of("Label 1"));
 
         assertThatThrownBy(() -> labelService.update(label2.getId(), updateDTO))
-                .isInstanceOf(ResourceAlreadyExistsException.class)
-                .hasMessageContaining("already exists");
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

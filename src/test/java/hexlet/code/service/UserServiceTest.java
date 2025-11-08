@@ -3,7 +3,6 @@ package hexlet.code.service;
 import hexlet.code.DatabaseCleanerExtension;
 import hexlet.code.dto.user.UserCreateDTO;
 import hexlet.code.dto.user.UserUpdateDTO;
-import hexlet.code.exception.ResourceAlreadyExistsException;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestPropertySource;
 
@@ -75,8 +75,7 @@ public class UserServiceTest {
         userData2.setPassword("password");
 
         assertThatThrownBy(() -> userService.create(userData2))
-                .isInstanceOf(ResourceAlreadyExistsException.class)
-                .hasMessageContaining("already exists");
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -136,8 +135,7 @@ public class UserServiceTest {
         updateDTO.setEmail(JsonNullable.of("user1@example.com"));
 
         assertThatThrownBy(() -> userService.update(user2.getId(), updateDTO))
-                .isInstanceOf(ResourceAlreadyExistsException.class)
-                .hasMessageContaining("already exists");
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
