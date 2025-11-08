@@ -20,6 +20,8 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -78,17 +80,13 @@ public abstract class TaskMapper {
         }
 
         if (dto.getTaskLabelIds() != null && !dto.getTaskLabelIds().isEmpty()) {
-            Set<Label> labels = dto.getTaskLabelIds().stream()
-                    .map(labelId -> labelRepository.findById(labelId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Label not found: " + labelId)))
-                    .collect(Collectors.toSet());
+            Set<Label> labels = getLabelsByIds(dto.getTaskLabelIds());
             task.setLabels(labels);
         }
     }
 
     @AfterMapping
     protected void updateTaskRelationships(TaskUpdateDTO dto, @MappingTarget Task task) {
-
         if (dto.getStatus() != null && dto.getStatus().isPresent()) {
             String newStatusSlug = dto.getStatus().get();
             TaskStatus status = taskStatusRepository.findBySlug(newStatusSlug)
@@ -109,10 +107,7 @@ public abstract class TaskMapper {
 
         if (dto.getTaskLabelIds() != null && dto.getTaskLabelIds().isPresent()) {
             Set<Long> newLabelIds = dto.getTaskLabelIds().get();
-            Set<Label> newLabels = newLabelIds.stream()
-                    .map(labelId -> labelRepository.findById(labelId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Label not found: " + labelId)))
-                    .collect(Collectors.toSet());
+            Set<Label> newLabels = getLabelsByIds(newLabelIds);
 
             task.getLabels().clear();
             task.getLabels().addAll(newLabels);
@@ -126,5 +121,27 @@ public abstract class TaskMapper {
         return labels.stream()
                 .map(Label::getId)
                 .collect(Collectors.toSet());
+    }
+
+    private Set<Label> getLabelsByIds(Set<Long> labelIds) {
+        if (labelIds == null || labelIds.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        List<Label> labels = labelRepository.findAllById(labelIds);
+
+        Set<Long> foundLabelIds = labels.stream()
+                .map(Label::getId)
+                .collect(Collectors.toSet());
+
+        Set<Long> missingLabelIds = labelIds.stream()
+                .filter(id -> !foundLabelIds.contains(id))
+                .collect(Collectors.toSet());
+
+        if (!missingLabelIds.isEmpty()) {
+            throw new ResourceNotFoundException("Label not found: " + missingLabelIds);
+        }
+
+        return new HashSet<>(labels);
     }
 }
